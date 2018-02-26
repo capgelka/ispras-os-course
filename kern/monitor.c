@@ -34,7 +34,7 @@ static struct Command commands[] = {
 int
 mon_debug(int argc, char **argv, struct Trapframe  *tf)
 {
-	cprintf("My funct works!\n");
+	cprintf("My funct works! %x %o\n", 10, 10);
 	return  0;
 }
 
