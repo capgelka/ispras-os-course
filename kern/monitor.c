@@ -24,10 +24,19 @@ struct Command {
 static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
+	{ "debug",  "Display debug string", mon_debug },
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
 /***** Implementations of basic kernel monitor commands *****/
+
+
+int
+mon_debug(int argc, char **argv, struct Trapframe  *tf)
+{
+	cprintf("My funct works!\n");
+	return  0;
+}
 
 int
 mon_help(int argc, char **argv, struct Trapframe *tf)
