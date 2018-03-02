@@ -71,30 +71,24 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
-	// Your code here        .
-	register uintptr_t* esp asm ("esp");
-	register uintptr_t*  ebp asm ("ebp");
-	uintptr_t* current_frame = ebp;
-	uintptr_t* current_stack = esp;
+	typedef union {
+		uintptr_t* addr;
+		uint32_t value;
+	} register_data;
+	register_data current_frame = (register_data) read_ebp();
 	cprintf("%s\n", "Stack backtrace:");
-	while(current_frame) {
-		cprintf("  ebp %08x eip %08x args ",
-			(uint32_t) current_frame,
-			(uint32_t) current_frame[1]);
+	while(current_frame.value) {
+		cprintf(
+			"  ebp %08x eip %08x args ",
+			current_frame.value,
+			current_frame.addr[1]
+		);
 		for (uint8_t i = 0; i < 5;  i++) {
-			cprintf("%08x ", current_frame[i + 2]);
+			cprintf("%08x ", current_frame.addr[i + 2]);
 		}
 		cprintf("%s", "\n");
-		/* for(uint32_t i = (uint32_t) current_stack; */
-		/*     i < (uint32_t) current_frame; */
-		/*     i++) */
-		/* { */
-		/* 	cprintf("%x", (uint32_t) i); */
-		/* } */
-		current_stack = current_frame;
-		current_frame = (uintptr_t*) *current_frame;
+		current_frame = (register_data) *current_frame.addr;
 	}
-//	cprintf("esp: %x\n ebp: %x\n", esp, ebp);
 	return 0;
 }
 
