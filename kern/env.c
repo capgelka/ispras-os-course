@@ -286,6 +286,21 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	//  What?  (See env_run() and env_pop_tf() below.)
 
 	//LAB 3: Your code here.
+
+	struct Elf* elf = (struct Elf *) binary;
+	struct Proghdr *ph, *eph;
+
+	ph = (struct Proghdr *) ((uint8_t *) elf + elf->e_phoff);
+	eph = ph + elf->e_phnum;
+
+	for (; ph < eph; ph++)
+		if (ph->p_type == ELF_PROG_LOAD) {
+			// memset((void *)ph->p_va, 0, ph->p_memsz);
+			memcpy((void *) ph->p_va, binary + ph->p_offset, ph->p_filesz);
+		}
+
+	e->env_tf.tf_eip = elf->e_entry;
+
 	
 #ifdef CONFIG_KSPACE
 	// Uncomment this for task №5.
@@ -304,6 +319,15 @@ void
 env_create(uint8_t *binary, size_t size, enum EnvType type)
 {
 	//LAB 3: Your code here.
+	int ret_code = 0;
+	struct Env* env;
+
+	ret_code = env_alloc(&env, 0);
+	if (ret_code) {
+		panic("env_alloc: %i", ret_code);
+	}
+	env->env_type = type;
+	load_icode(env, binary, size);
 }
 
 //
