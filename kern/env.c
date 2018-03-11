@@ -129,7 +129,7 @@ env_init(void)
 			envs[i].env_link = (envs + i);
 		}
 		else {
-			envs[i].env_link = NULL;
+			envs[i].env_link = envs;
 		}
 	}
 	
@@ -158,6 +158,16 @@ env_init_percpu(void)
 	lldt(0);
 }
 
+int
+find_env_number(struct Env* env) {
+	for (int i = 0; i < NENV; i++) {
+		if (&envs[i] == env) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 //
 // Allocates and initializes a new environment.
 // On success, the new environment is stored in *newenv_store.
@@ -170,6 +180,7 @@ int
 env_alloc(struct Env **newenv_store, envid_t parent_id)
 {
 	int32_t generation;
+	int8_t offset_multiplier;
 	struct Env *e;
 
 	if (!(e = env_free_list)) {
@@ -211,7 +222,11 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	e->env_tf.tf_ss = GD_KD | 0;
 	e->env_tf.tf_cs = GD_KT | 0;
 	//LAB 3: Your code here.
-	// e->env_tf.tf_esp = 0x210000;
+	offset_multiplier = find_env_number(e);
+	if (e < 0) {
+		panic("can't find environment with addr %p", e);
+	}
+	e->env_tf.tf_esp = 0x210000 + offset_multiplier * 4096;
 #else
 #endif
 	// You will set e->env_tf.tf_eip later.
@@ -295,7 +310,7 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 
 	for (; ph < eph; ph++)
 		if (ph->p_type == ELF_PROG_LOAD) {
-			// memset((void *)ph->p_va, 0, ph->p_memsz);
+			memset((void *) ph->p_va, 0, ph->p_memsz);
 			memcpy((void *) ph->p_va, binary + ph->p_offset, ph->p_filesz);
 		}
 
@@ -456,15 +471,13 @@ env_run(struct Env *e)
 	//LAB 3: Your code here.
 
 	if (curenv && curenv->env_status == ENV_RUNNING) {
-//	panic("env_run not yet implemented");
 		curenv->env_type = ENV_RUNNABLE;
 	}
 	curenv = e;
 	e->env_type = ENV_RUNNING;
 	e->env_runs++;
-	env_pop_tf(&(curenv->env_tf));
-	//panic("env_run not yet implemented");
 
 	env_pop_tf(&e->env_tf);
+
 }
 
