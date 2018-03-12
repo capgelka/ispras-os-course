@@ -226,7 +226,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	if (e < 0) {
 		panic("can't find environment with addr %p", e);
 	}
-	e->env_tf.tf_esp = 0x210000 + offset_multiplier * 4096;
+	e->env_tf.tf_esp = 0x210000 - offset_multiplier * 40960;
 #else
 #endif
 	// You will set e->env_tf.tf_eip later.
@@ -245,16 +245,32 @@ bind_functions(struct Env *e, struct Elf *elf)
 {
 	//find_function from kdebug.c should be used
 	//LAB 3: Your code here.
+	/* int* ptr; */
+ 	/* ptr = (int* ) 0x00231008; */
+	/* *ptr = (int) &cprintf; */
+	
+	/* ptr = (int *) 0x00221004; */
+	/* *ptr = (int) &sys_yield; */
 
-	/*
+	/* ptr = (int *) 0x00231004; */
+	/* *ptr = (int) &sys_yield; */
+	/* ptr = (int *) 0x00241004; */
+
+	/* *ptr = (int) &sys_yield; */
+	/* ptr = (int *) 0x0022100c; */
+	/* *ptr = (int) &sys_exit; */
+
+	/* ptr = (int *) 0x00231010; */
+	/* *ptr= (int) &sys_exit; */
+	/* ptr = (int *) 0x0024100c; */
+	/* *ptr= (int) &sys_exit; */
 	*((int *) 0x00231008) = (int) &cprintf;
-	*((int *) 0x00221004) = (int) &sys_yield;
-	*((int *) 0x00231004) = (int) &sys_yield;
-	*((int *) 0x00241004) = (int) &sys_yield;
-	*((int *) 0x0022100c) = (int) &sys_exit;
-	*((int *) 0x00231010) = (int) &sys_exit;
-	*((int *) 0x0024100c) = (int) &sys_exit;
-	*/
+        *((int *) 0x00221004) = (int) &sys_yield;
+        *((int *) 0x00231004) = (int) &sys_yield;
+        *((int *) 0x00241004) = (int) &sys_yield;
+        *((int *) 0x0022100c) = (int) &sys_exit;
+        *((int *) 0x00231010) = (int) &sys_exit;
+        *((int *) 0x0024100c) = (int) &sys_exit;
 }
 #endif
 
@@ -402,9 +418,10 @@ void
 env_pop_tf(struct Trapframe *tf)
 {
 #ifdef CONFIG_KSPACE
+	cprintf("start pop\n");
 	static uintptr_t eip = 0;
 	eip = tf->tf_eip;
-
+	cprintf("eip: 0x%x\n", eip);
 	asm volatile (
 		"mov %c[ebx](%[tf]), %%ebx \n\t"
 		"mov %c[ecx](%[tf]), %%ecx \n\t"
@@ -432,6 +449,7 @@ env_pop_tf(struct Trapframe *tf)
 //		  [esp]"i"(offsetof(struct Trapframe, tf_regs.reg_oesp))
 		  [esp]"i"(offsetof(struct Trapframe, tf_esp))
 		: "cc", "memory", "ebx", "ecx", "edx", "esi", "edi" );
+	cprintf("AFTER ASM\n");
 #else
 #endif
 	panic("BUG");  /* mostly to placate the compiler */
@@ -476,8 +494,11 @@ env_run(struct Env *e)
 	curenv = e;
 	e->env_type = ENV_RUNNING;
 	e->env_runs++;
+	cprintf("EIP 0x%x", curenv->env_tf.tf_eip);
+	env_pop_tf(&(curenv->env_tf));
+	uint32_t eip;
+	__asm __volatile("movl %%ebp,%0" : "=r" (eip));
 
-	env_pop_tf(&e->env_tf);
-
+	cprintf("EIP after pop %d", eip);
 }
 

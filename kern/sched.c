@@ -26,10 +26,12 @@ sched_yield(void)
 	// below to halt the cpu.
 
 	//LAB 3: Your code here.
-
+	//sched_halt();
 	struct Env* next_env = curenv;
 	do
 	{
+		cprintf("possible env enty point: 0x%x\n",
+			next_env->env_tf.tf_eip);
 		next_env = curenv->env_link;
 		if (next_env->env_status == ENV_RUNNABLE ||
 			next_env->env_link == curenv) {
@@ -42,9 +44,10 @@ sched_yield(void)
 		curenv->env_status == ENV_RUNNING) {
 		next_env = curenv;
 	} else {
+		cprintf("else in scheduler\n");
 		next_env = envs;
 	}
-
+	//env_run(envs);
 	env_run(next_env);
 	// sched_halt never returns
 	sched_halt();
