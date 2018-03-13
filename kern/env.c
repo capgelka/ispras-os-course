@@ -264,6 +264,27 @@ bind_functions(struct Env *e, struct Elf *elf)
 	/* *ptr= (int) &sys_exit; */
 	/* ptr = (int *) 0x0024100c; */
 	/* *ptr= (int) &sys_exit; */
+
+	struct Secthdr *sh, *esh;
+	struct Elf32_Sym* elf_sym;
+
+	sh = (struct Secthdr *) ((uint8_t *) elf + elf->e_shoff);
+
+	esh = sh + elf->e_shnum;
+
+	for (; sh < esh; sh++)
+		if (sh->sh_type == ELF_SHT_SYMTAB) {
+			elf_sym = (struct Elf32_Sym *)((uint32_t *) elf + sh->sh_offset);
+			cprintf("ELF_DEBUG: %d\n", elf_sym->st_name);
+			// memset((void *) sh->p_va, 0, sh->p_memsz);
+			// memcpy((void *) sh->p_va, binary + sh->p_offset, sh->p_filesz);
+		}
+		else {
+			cprintf("ELSE ELF\n");
+		}
+
+
+
 	*((int *) 0x00231008) = (int) &cprintf;
         *((int *) 0x00221004) = (int) &sys_yield;
         *((int *) 0x00231004) = (int) &sys_yield;
@@ -335,7 +356,7 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	
 #ifdef CONFIG_KSPACE
 	// Uncomment this for task №5.
-	//bind_functions();
+	bind_functions(e, elf);
 #endif
 }
 
