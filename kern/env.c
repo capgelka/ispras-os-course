@@ -265,17 +265,40 @@ bind_functions(struct Env *e, struct Elf *elf)
 	/* ptr = (int *) 0x0024100c; */
 	/* *ptr= (int) &sys_exit; */
 
-	struct Secthdr *sh, *esh;
+	struct Secthdr *sh, *esh, *sh_i;
 	struct Elf32_Sym* elf_sym;
 
 	sh = (struct Secthdr *) ((uint8_t *) elf + elf->e_shoff);
 
 	esh = sh + elf->e_shnum;
 
-	for (; sh < esh; sh++)
-		if (sh->sh_type == ELF_SHT_SYMTAB) {
-			elf_sym = (struct Elf32_Sym *)((uint32_t *) elf + sh->sh_offset);
-			cprintf("ELF_DEBUG: %d\n", elf_sym->st_name);
+
+	// shdr = (Elf32_Shdr *)(ep->maddr + ep->ehdr->e_shoff);
+ //    for (i = 0; i < ep->ehdr->e_shnum; i++) {
+ //    	if (shdr[i].sh_type == SHT_SYMTAB) {   /* Static symbol table */
+ //    	    ep->symtab = (Elf32_Sym *)(ep->maddr + shdr[i].sh_offset);
+ //    	    ep->symtab_end = (Elf32_Sym *)((char *)ep->symtab + shdr[i].sh_size);
+ //    	    ep->strtab = (char *)(ep->maddr + shdr[shdr[i].sh_link].sh_offset);
+ //    	}
+ //    	if (shdr[i].sh_type == SHT_DYNSYM) {   /* Dynamic symbol table */
+ //    	    ep->dsymtab = (Elf32_Sym *)(ep->maddr + shdr[i].sh_offset);
+ //    	    ep->dsymtab_end = (Elf32_Sym *)((char *)ep->dsymtab + shdr[i].sh_size);
+ //    	    ep->dstrtab = (char *)(ep->maddr + shdr[shdr[i].sh_link].sh_offset);
+ //    	}
+ //    }
+ //    return ep;
+
+	for (sh_i = sh; sh_i < esh; sh_i++)
+		if (sh_i->sh_type == ELF_SHT_SYMTAB) {
+			elf_sym = (struct Elf32_Sym *)((uint32_t *) elf + sh_i->sh_offset);
+			cprintf("ELF_DEBUG: %p %d %d %d %d %d %d\n",
+					elf_sym,
+					elf_sym->st_value,
+					elf_sym->st_size,
+					elf_sym->st_shndx,
+					elf_sym->st_name,
+					elf_sym->st_info,
+					elf_sym->st_other);
 			// memset((void *) sh->p_va, 0, sh->p_memsz);
 			// memcpy((void *) sh->p_va, binary + sh->p_offset, sh->p_filesz);
 		}
