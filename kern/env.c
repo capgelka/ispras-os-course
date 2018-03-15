@@ -266,12 +266,13 @@ bind_functions(struct Env *e, struct Elf *elf)
 	/* *ptr= (int) &sys_exit; */
 
 	struct Secthdr *sh, *esh, *sh_i;
-	struct Elf32_Sym* elf_sym;
+	struct Elf32_Sym *elf_sym, *elf_sym_end;
 
 	sh = (struct Secthdr *) ((uint8_t *) elf + elf->e_shoff);
 
 	esh = sh + elf->e_shnum;
 
+	char* strtab;
 
 	// shdr = (Elf32_Shdr *)(ep->maddr + ep->ehdr->e_shoff);
  //    for (i = 0; i < ep->ehdr->e_shnum; i++) {
@@ -287,18 +288,25 @@ bind_functions(struct Env *e, struct Elf *elf)
  //    	}
  //    }
  //    return ep;
+// from ftrace
 
 	for (sh_i = sh; sh_i < esh; sh_i++)
 		if (sh_i->sh_type == ELF_SHT_SYMTAB) {
 			elf_sym = (struct Elf32_Sym *)((uint32_t *) elf + sh_i->sh_offset);
-			cprintf("ELF_DEBUG: %p %d %d %d %d %d %d\n",
-					elf_sym,
-					elf_sym->st_value,
-					elf_sym->st_size,
-					elf_sym->st_shndx,
-					elf_sym->st_name,
-					elf_sym->st_info,
-					elf_sym->st_other);
+			elf_sym_end = (struct Elf32_Sym *)  ((uint32_t *) elf_sym + sh_i->sh_size);
+			strtab = (char *)  ((uint32_t *) elf + sh[sh_i->sh_link].sh_offset);
+			for (; elf_sym < elf_sym_end; elf_sym++) {
+				cprintf("ELF_DEBUG: %p %d %d %d %d %d %d %d +%s+\n",
+						elf_sym,
+						elf_sym->st_value,
+						elf_sym->st_size,
+						elf_sym->st_shndx,
+						elf_sym->st_name,
+						elf_sym->st_info,
+						elf_sym->st_other,
+						sh_i->sh_size,
+						&strtab[elf_sym->st_name]);
+			}
 			// memset((void *) sh->p_va, 0, sh->p_memsz);
 			// memcpy((void *) sh->p_va, binary + sh->p_offset, sh->p_filesz);
 		}
