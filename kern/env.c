@@ -239,6 +239,73 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	return 0;
 }
 
+
+static inline struct Secthdr *elf_sheader(struct Elf *hdr) {
+	return (struct Secthdr *)((int)hdr + hdr->e_shoff);
+}
+ 
+static inline struct Secthdr *elf_section(struct Elf *hdr, int idx) {
+	return &elf_sheader(hdr)[idx];
+}
+
+
+static inline char *elf_str_table(struct Elf *hdr) {
+	if(hdr->e_shstrndx == ELF_SHN_UNDEF) return NULL;
+	return (char *)hdr + elf_section(hdr, hdr->e_shstrndx)->sh_offset;
+}
+ 
+static inline char *elf_lookup_string(struct Elf *hdr, int offset) {
+	char *strtab = elf_str_table(hdr);
+	if(strtab == NULL) return NULL;
+	return strtab + offset;
+}
+
+static int elf_get_symval(struct Elf *hdr, int table, uint32_t idx) {
+	if(table == 0 || idx == 0) return 0; // SHN_UNDEF
+	struct Secthdr *symtab = elf_section(hdr, table);
+ 
+	uint32_t symtab_entries = symtab->sh_size / symtab->sh_entsize;
+	if(idx >= symtab_entries) {
+		panic("Symbol Index out of Range (%d:%u).\n", table, idx);
+		return 100;
+	}
+ 
+	int symaddr = (int)hdr + symtab->sh_offset;
+	struct Elf32_Sym *symbol = &((struct Elf32_Sym *)symaddr)[idx];
+
+	if(symbol->st_shndx == 0) { // SHN_UNDEF
+	// External symbol, lookup value
+	struct Secthdr *strtab = elf_section(hdr, symtab->sh_link);
+	const char *name = (const char *)hdr + strtab->sh_offset + symbol->st_name;
+
+	extern void *elf_lookup_symbol(const char *name);
+	void *target = elf_lookup_symbol(name);
+
+	if(target == NULL) {
+		// Extern symbol not found
+		// if(ELF32_ST_BIND(symbol->st_info) & STB_WEAK) {
+		// 	// Weak symbol initialized as 0
+		// 	return 0;
+		// } else {
+		// 	panic("Undefined External Symbol : %s.\n", name);
+		// 	return ELF_RELOC_ERR;
+		// }
+		panic("NOT PANIC");
+	} else {
+		return (int)target;
+	}
+
+	} else if(symbol->st_shndx == 0xfff1) { // SHN_ABS
+		// Absolute symbol
+		return symbol->st_value;
+	} else {
+		// Internally defined symbol
+		struct Secthdr *target = elf_section(hdr, symbol->st_shndx);
+		return (int)hdr + symbol->st_value + target->sh_offset;
+	}
+}
+
+
 #ifdef CONFIG_KSPACE
 static void
 bind_functions(struct Env *e, struct Elf *elf)
@@ -274,7 +341,7 @@ bind_functions(struct Env *e, struct Elf *elf)
 
 	char* strtab;
 
-	// shdr = (Elf32_Shdr *)(ep->maddr + ep->ehdr->e_shoff);
+	// shdr = (struct Secthdr *)(ep->maddr + ep->ehdr->e_shoff);
  //    for (i = 0; i < ep->ehdr->e_shnum; i++) {
  //    	if (shdr[i].sh_type == SHT_SYMTAB) {   /* Static symbol table */
  //    	    ep->symtab = (Elf32_Sym *)(ep->maddr + shdr[i].sh_offset);
@@ -290,11 +357,15 @@ bind_functions(struct Env *e, struct Elf *elf)
  //    return ep;
 // from ftrace
 
-	for (sh_i = sh; sh_i < esh; sh_i++)
+
+	char * str = (char*) (elf + sh[elf->e_shstrndx].sh_offset);
+	for (sh_i = sh; sh_i < esh; sh_i++) {
+		cprintf("==== %x\n", str[sh_i->sh_name]);
 		if (sh_i->sh_type == ELF_SHT_SYMTAB) {
 			elf_sym = (struct Elf32_Sym *)((uint32_t *) elf + sh_i->sh_offset);
 			elf_sym_end = (struct Elf32_Sym *)  ((uint32_t *) elf_sym + sh_i->sh_size);
 			strtab = (char *)  ((uint32_t *) elf + sh[sh_i->sh_link].sh_offset);
+			cprintf("))))) %d\n", elf_get_symval(elf, (int) elf_sym, 1));
 			for (; elf_sym < elf_sym_end; elf_sym++) {
 				cprintf("ELF_DEBUG: %p %d %d %d %d %d %d %d +%s+\n",
 						elf_sym,
@@ -307,12 +378,18 @@ bind_functions(struct Env *e, struct Elf *elf)
 						sh_i->sh_size,
 						&strtab[elf_sym->st_name]);
 			}
+
+			// char* str = elf + strtab
+			// for (uint32_t i = 0; i < (sh_i->sh_size / sizeof(struct Secthdr *)); i++) {
+  	// 			cprintf("%s\n", str + sh_i[i].sh_name);
+			// }
 			// memset((void *) sh->p_va, 0, sh->p_memsz);
 			// memcpy((void *) sh->p_va, binary + sh->p_offset, sh->p_filesz);
 		}
 		else {
 			cprintf("ELSE ELF\n");
 		}
+	}
 
 
 
@@ -323,7 +400,7 @@ bind_functions(struct Env *e, struct Elf *elf)
         *((int *) 0x0022100c) = (int) &sys_exit;
         *((int *) 0x00231010) = (int) &sys_exit;
         *((int *) 0x0024100c) = (int) &sys_exit;
-}
+}	
 #endif
 
 //
