@@ -240,70 +240,70 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 }
 
 
-static inline struct Secthdr *elf_sheader(struct Elf *hdr) {
-	return (struct Secthdr *)((int)hdr + hdr->e_shoff);
-}
+// static inline struct Secthdr *elf_sheader(struct Elf *hdr) {
+// 	return (struct Secthdr *)((int)hdr + hdr->e_shoff);
+// }
  
-static inline struct Secthdr *elf_section(struct Elf *hdr, int idx) {
-	return &elf_sheader(hdr)[idx];
-}
+// static inline struct Secthdr *elf_section(struct Elf *hdr, int idx) {
+// 	return &elf_sheader(hdr)[idx];
+// }
 
 
-static inline char *elf_str_table(struct Elf *hdr) {
-	if(hdr->e_shstrndx == ELF_SHN_UNDEF) return NULL;
-	return (char *)hdr + elf_section(hdr, hdr->e_shstrndx)->sh_offset;
-}
+// static inline char *elf_str_table(struct Elf *hdr) {
+// 	if(hdr->e_shstrndx == ELF_SHN_UNDEF) return NULL;
+// 	return (char *)hdr + elf_section(hdr, hdr->e_shstrndx)->sh_offset;
+// }
  
-static inline char *elf_lookup_string(struct Elf *hdr, int offset) {
-	char *strtab = elf_str_table(hdr);
-	if(strtab == NULL) return NULL;
-	return strtab + offset;
-}
+// static inline char *elf_lookup_string(struct Elf *hdr, int offset) {
+// 	char *strtab = elf_str_table(hdr);
+// 	if(strtab == NULL) return NULL;
+// 	return strtab + offset;
+// }
 
-static int elf_get_symval(struct Elf *hdr, int table, uint32_t idx) {
-	if(table == 0 || idx == 0) return 0; // SHN_UNDEF
-	struct Secthdr *symtab = elf_section(hdr, table);
+// static int elf_get_symval(struct Elf *hdr, int table, uint32_t idx) {
+// 	if(table == 0 || idx == 0) return 0; // SHN_UNDEF
+// 	struct Secthdr *symtab = elf_section(hdr, table);
  
-	uint32_t symtab_entries = symtab->sh_size / symtab->sh_entsize;
-	if(idx >= symtab_entries) {
-		panic("Symbol Index out of Range (%d:%u).\n", table, idx);
-		return 100;
-	}
+// 	uint32_t symtab_entries = symtab->sh_size / symtab->sh_entsize;
+// 	if(idx >= symtab_entries) {
+// 		panic("Symbol Index out of Range (%d:%u).\n", table, idx);
+// 		return 100;
+// 	}
  
-	int symaddr = (int)hdr + symtab->sh_offset;
-	struct Elf32_Sym *symbol = &((struct Elf32_Sym *)symaddr)[idx];
+// 	int symaddr = (int)hdr + symtab->sh_offset;
+// 	struct Elf32_Sym *symbol = &((struct Elf32_Sym *)symaddr)[idx];
 
-	if(symbol->st_shndx == 0) { // SHN_UNDEF
-	// External symbol, lookup value
-	struct Secthdr *strtab = elf_section(hdr, symtab->sh_link);
-	const char *name = (const char *)hdr + strtab->sh_offset + symbol->st_name;
+// 	if(symbol->st_shndx == 0) { // SHN_UNDEF
+// 	// External symbol, lookup value
+// 	struct Secthdr *strtab = elf_section(hdr, symtab->sh_link);
+// 	const char *name = (const char *)hdr + strtab->sh_offset + symbol->st_name;
 
-	extern void *elf_lookup_symbol(const char *name);
-	void *target = elf_lookup_symbol(name);
+// 	extern void *elf_lookup_symbol(const char *name);
+// 	void *target = elf_lookup_symbol(name);
 
-	if(target == NULL) {
-		// Extern symbol not found
-		// if(ELF32_ST_BIND(symbol->st_info) & STB_WEAK) {
-		// 	// Weak symbol initialized as 0
-		// 	return 0;
-		// } else {
-		// 	panic("Undefined External Symbol : %s.\n", name);
-		// 	return ELF_RELOC_ERR;
-		// }
-		panic("NOT PANIC");
-	} else {
-		return (int)target;
-	}
+// 	if(target == NULL) {
+// 		// Extern symbol not found
+// 		// if(ELF32_ST_BIND(symbol->st_info) & STB_WEAK) {
+// 		// 	// Weak symbol initialized as 0
+// 		// 	return 0;
+// 		// } else {
+// 		// 	panic("Undefined External Symbol : %s.\n", name);
+// 		// 	return ELF_RELOC_ERR;
+// 		// }
+// 		panic("NOT PANIC");
+// 	} else {
+// 		return (int)target;
+// 	}
 
-	} else if(symbol->st_shndx == 0xfff1) { // SHN_ABS
-		// Absolute symbol
-		return symbol->st_value;
-	} else {
-		// Internally defined symbol
-		struct Secthdr *target = elf_section(hdr, symbol->st_shndx);
-		return (int)hdr + symbol->st_value + target->sh_offset;
-	}
-}
+// 	} else if(symbol->st_shndx == 0xfff1) { // SHN_ABS
+// 		// Absolute symbol
+// 		return symbol->st_value;
+// 	} else {
+// 		// Internally defined symbol
+// 		struct Secthdr *target = elf_section(hdr, symbol->st_shndx);
+// 		return (int)hdr + symbol->st_value + target->sh_offset;
+// 	}
+// }
 
 
 #ifdef CONFIG_KSPACE
@@ -333,7 +333,7 @@ bind_functions(struct Env *e, struct Elf *elf)
 	/* *ptr= (int) &sys_exit; */
 
 	struct Secthdr *sh, *esh, *sh_i;
-	struct Elf32_Sym *elf_sym, *elf_sym_end;
+	struct Elf32_Sym *sym, *elf_sym, *elf_sym_end;
 
 	sh = (struct Secthdr *) ((uint8_t *) elf + elf->e_shoff);
 
@@ -359,25 +359,31 @@ bind_functions(struct Env *e, struct Elf *elf)
 
 
 	char * str = (char*) (elf + sh[elf->e_shstrndx].sh_offset);
+	uint32_t sym_offset = 0, sym_size = 0, str_offset = 0;
 	for (sh_i = sh; sh_i < esh; sh_i++) {
+		cprintf("==== %x\n", sh_i->sh_name);
 		cprintf("==== %x\n", str[sh_i->sh_name]);
 		if (sh_i->sh_type == ELF_SHT_SYMTAB) {
+			sym_offset = sh_i->sh_offset;
+			sym_size = sh_i->sh_size;
 			elf_sym = (struct Elf32_Sym *)((uint32_t *) elf + sh_i->sh_offset);
 			elf_sym_end = (struct Elf32_Sym *)  ((uint32_t *) elf_sym + sh_i->sh_size);
 			strtab = (char *)  ((uint32_t *) elf + sh[sh_i->sh_link].sh_offset);
-			cprintf("))))) %d\n", elf_get_symval(elf, (int) elf_sym, 1));
-			for (; elf_sym < elf_sym_end; elf_sym++) {
-				cprintf("ELF_DEBUG: %p %d %d %d %d %d %d %d +%s+\n",
-						elf_sym,
-						elf_sym->st_value,
-						elf_sym->st_size,
-						elf_sym->st_shndx,
-						elf_sym->st_name,
-						elf_sym->st_info,
-						elf_sym->st_other,
-						sh_i->sh_size,
-						&strtab[elf_sym->st_name]);
-			}
+
+			// cprintf("))))) %d\n", elf_get_symval(elf, (int) elf_sym, 1));
+
+			// for (; elf_sym < elf_sym_end; elf_sym++) {
+			// 	cprintf("ELF_DEBUG: %p %d %d %d %d %d %d %d +%s+\n",
+			// 			elf_sym,
+			// 			elf_sym->st_value,
+			// 			elf_sym->st_size,
+			// 			elf_sym->st_shndx,
+			// 			elf_sym->st_name,
+			// 			elf_sym->st_info,
+			// 			elf_sym->st_other,
+			// 			sh_i->sh_size,
+			// 			&strtab[elf_sym->st_name]);
+			// }
 
 			// char* str = elf + strtab
 			// for (uint32_t i = 0; i < (sh_i->sh_size / sizeof(struct Secthdr *)); i++) {
@@ -386,11 +392,35 @@ bind_functions(struct Env *e, struct Elf *elf)
 			// memset((void *) sh->p_va, 0, sh->p_memsz);
 			// memcpy((void *) sh->p_va, binary + sh->p_offset, sh->p_filesz);
 		}
+		if (sh_i->sh_type == ELF_SHT_STRTAB) {
+			str_offset = sh_i->sh_offset;
+			// str_size = sh_i->sh_size;
+
+		}
 		else {
 			cprintf("ELSE ELF\n");
 		}
 	}
 
+	for (uint32_t j = 0; j * sizeof(struct Elf32_Sym) < sym_size; j++) { 
+
+		size_t absoffset = sym_offset + j * sizeof(struct Elf32_Sym);                                                                                                                
+	    // memmove(&sym, cbytes + absoffset, sizeof(sym));
+	    sym = (struct Elf32_Sym *) elf + absoffset;
+	    cprintf("SYMBOL TABLE ENTRY %d (0x%x %d)\n", j, (uint32_t) sym, absoffset);                                                                                                                              
+	    cprintf("st_name = %d", sym->st_name);                                                                                                                                  
+	    if (sym->st_name != 0) {                                                                                                                                               
+	      cprintf(" (%s)", (char *) elf + str_offset + sym->st_name);                                                                                                                 
+	    }                                                                                                                                                                     
+	    cprintf("\n");                                                                                                                                                         
+	    cprintf("st_info = %d\n", sym->st_info);                                                                                                                                
+	    cprintf("st_other = %d\n", sym->st_other);                                                                                                                              
+	    cprintf("st_shndx = %d\n", sym->st_shndx);                                                                                                                              
+	    cprintf("st_value = %p\n", (void *)sym->st_value);                                                                                                                      
+	    cprintf("st_size = %d\n", sym->st_size);                                                                                                                               
+    cprintf("\n");               
+
+	}
 
 
 	*((int *) 0x00231008) = (int) &cprintf;
