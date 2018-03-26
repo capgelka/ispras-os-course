@@ -276,6 +276,35 @@ find_function(const char * const fname)
 	// // Ignore stuff after the colon.
 	// info->eip_fn_namelen = strfind(info->eip_fn_name, ':') - info->eip_fn_name;
 
-	return 0;
+    const char *stabstr = __STABSTR_BEGIN__;
+    //////////////////////////
+ 
+    if (__STABSTR_END__ <= stabstr || __STABSTR_END__[-1] != 0) {
+        return 0;
+    }
+ 
+    size_t fname_len = strlen(fname);
+ 
+    const struct Stab *stab;
+ 
+    for (stab = __STAB_BEGIN__; stab != __STAB_END__; ++stab) {
+        if (stab->n_type != N_FUN) {
+            continue;
+        }
+ 
+        const char *fullname = stabstr + stab->n_strx;
+ 
+        int fullname_len = strfind(fullname, ':') - fullname;
+ 
+        if (fname_len != fullname_len) {
+            continue;
+        }
+ 
+        if (strncmp(fname, stabstr + stab->n_strx, fname_len) == 0) {
+            return stab->n_value;
+        }
+    }
+ 
+    return 0;
 }
 

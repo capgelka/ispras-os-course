@@ -44,7 +44,7 @@ sched_yield(void)
 		curenv->env_status == ENV_RUNNING) {
 		next_env = curenv;
 	} else {
-		cprintf("else in scheduler\n");
+		// cprintf("else in scheduler\n");
 		next_env = envs;
 	}
 	//env_run(envs);

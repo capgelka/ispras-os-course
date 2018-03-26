@@ -12,6 +12,7 @@
 #include <kern/monitor.h>
 #include <kern/sched.h>
 #include <kern/cpu.h>
+#include <kern/kdebug.h>
 
 struct Env env_array[NENV];
 struct Env *curenv = NULL;
@@ -309,142 +310,163 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 #ifdef CONFIG_KSPACE
 
 
-/* static void */
-/* bind_functions(struct Env *e, struct Elf *elf) */
-/* { */
-/* 	if (!elf->e_shoff) { */
-/* 		panic("Section header table is not found"); */
-/* 	} */
-
-/* 	struct Secthdr *sh = (struct Secthdr *)((uint8_t *)elf + elf->e_shoff); */
-
-/* 	for (int i = 0; i < elf->e_shnum; ++i) { */
-/* 		if (sh[i].sh_type != ELF_SHT_SYMTAB) { */
-/* 			continue; */
-/* 		} */
-
-/* 		int n = sh[i].sh_size / sh[i].sh_entsize; */
-/* 		struct Elf32_Sym *sym = (struct Elf32_Sym *)((uint8_t *)elf + sh[i].sh_offset); */
-/* 		char *strtab = (char *)((uint8_t *)elf + sh[sh[i].sh_link].sh_offset); */
-
-/* 		for (; n --> 0; ++sym) { */
-/* 			if (ELF32_ST_TYPE(sym->st_info) != STT_OBJECT) { */
-/* 				continue; */
-/* 			} */
-
-/* 			const char *name = strtab + sym->st_name; */
-/* 			uintptr_t addr = find_function(name); */
-
-/* 			if (addr) { */
-/* 				*((int *)sym->st_value) = addr; */
-/* 			} */
-/* 		} */
-/* 	} */
-/* } */
-
 static void
 bind_functions(struct Env *e, struct Elf *elf)
 {
-	//find_function from kdebug.c should be used
-	//LAB 3: Your code here.
-	/* int* ptr; */
- 	/* ptr = (int* ) 0x00231008; */
-	/* *ptr = (int) &cprintf; */
+	if (!elf->e_shoff) {
+		panic("Section header table is not found");
+	}
+
+	struct Secthdr *sh = (struct Secthdr *)((uint8_t *)elf + elf->e_shoff);
+
+	for (int i = 0; i < elf->e_shnum; ++i) {
+		if (sh[i].sh_type != ELF_SHT_SYMTAB) {
+			continue;
+		}
+
+		int n = sh[i].sh_size / sh[i].sh_entsize;
+		struct Elf32_Sym *sym = (struct Elf32_Sym *)((uint8_t *)elf + sh[i].sh_offset);
+		char *strtab = (char *)((uint8_t *)elf + sh[sh[i].sh_link].sh_offset);
+
+		for (; n --> 0; ++sym) {
+			if (ELF32_ST_TYPE(sym->st_info) != STT_OBJECT) {
+				continue;
+			}
+
+			const char *name = strtab + sym->st_name;
+				    cprintf("\n");
+	    // cprintf("st_other = %d\n", sym->st_other);
+	    // cprintf("st_shndx = %d\n", sym->st_shndx);
+	    // cprintf("st_value = %p\n", (void *)sym->st_value);
+	    // cprintf("st_size = %d\n", sym->st_size);
+	    // cprintf("\n");
+			uintptr_t addr = find_function(name);
+
+			if (addr) {
+				*((int *)sym->st_value) = addr;
+			}
+		}
+	}
+}
+
+// static void
+// bind_functions(struct Env *e, struct Elf *elf)
+// {
+// 	//find_function from kdebug.c should be used
+// 	//LAB 3: Your code here.
+
+
+// 	struct Secthdr *sh, *esh, *sh_i;
+// 	struct Elf32_Sym *sym, *elf_sym, *elf_sym_end;
+// 	sym = 0;
+// 	elf_sym = 0;
+
+// 	sh = (struct Secthdr *) ((uint8_t *) elf + elf->e_shoff);
+
+// 	esh = sh + (elf->e_shnum * elf->e_shentsize);
+
+// 	char* strtab =0;
+// 	// cprintf("======12121=== %d %d\n", elf->e_magic == ELF_MAGIC, elf->e_magic);
+// 	// uint32_t sym_offset1 = 0, sym_size1 = 0, str_offset1 = 0;
+// 	// for (int i = 0; i < elf->e_shnum; i++) {
+// 	// 	if (sh[i].sh_type == ELF_SHT_SYMTAB) {
+// 	// 		cprintf("SECHDR ADDR %d\n", (uint32_t) &sh[i]);
+// 	// 		sym_offset1 = sh[i].sh_offset;
+// 	// 		sym_size1 = sh[i].sh_size;
+// 	// 	} else if (sh[i].sh_type == ELF_SHT_STRTAB) {
+// 	// 		str_offset1 = sh[i].sh_offset;
+// 	// 	}
+// 	// 	cprintf("OFFSETT: %d %d %d \n",
+// 	// 		sym_offset1,
+// 	// 		sym_size1,
+// 	// 		str_offset1);
+
+// 	// }
+// 	int n =0;
 	
-	/* ptr = (int *) 0x00221004; */
-	/* *ptr = (int) &sys_yield; */
+// //	char * str = (char*) (elf + sh[elf->e_shstrndx].sh_offset);
+// 	uint32_t sym_offset = 0, sym_size = 0, str_offset = 0;
+// 	for (sh_i = sh; sh_i < esh; sh_i++) {
+// //		cprintf("==== %x\n", sh_i->sh_name);
+// //		cprintf("==== %s\n", &str[sh_i->sh_name]);
+// 		if (sh_i->sh_type == ELF_SHT_SYMTAB) {
+// 			cprintf("SECHDR ADDR %d\n", (uint32_t) sh_i);
+// 			sym_offset = sh_i->sh_offset;
+// 			sym_size = sh_i->sh_entsize;
+// 			elf_sym = (struct Elf32_Sym *)((uint8_t *) elf + sh_i->sh_offset);
+// 			elf_sym_end = (struct Elf32_Sym *)  ((uint8_t *) elf_sym + sh_i->sh_size);
+// 			strtab = (char *)  ((uint8_t *) elf + sh[sh_i->sh_link].sh_offset);
+// 			struct Elf32_Sym *sym = (struct Elf32_Sym *)((uint8_t *) elf + sh_i->sh_offset);
+// 			cprintf("TEST? %d\n", sym == elf_sym);
+// 			n = sh_i->sh_size / sh_i->sh_entsize;
+// 		}
+// 		if (sh_i->sh_type == ELF_SHT_STRTAB) {
+// 			str_offset = sh_i->sh_offset;
+// 			// str_size = sh_i->sh_size;
 
-	/* ptr = (int *) 0x00231004; */
-	/* *ptr = (int) &sys_yield; */
-	/* ptr = (int *) 0x00241004; */
-
-	/* *ptr = (int) &sys_yield; */
-	/* ptr = (int *) 0x0022100c; */
-	/* *ptr = (int) &sys_exit; */
-
-	/* ptr = (int *) 0x00231010; */
-	/* *ptr= (int) &sys_exit; */
-	/* ptr = (int *) 0x0024100c; */
-	/* *ptr= (int) &sys_exit; */
-
-	struct Secthdr *sh, *esh, *sh_i;
-	struct Elf32_Sym *sym, *elf_sym, *elf_sym_end;
-
-	sh = (struct Secthdr *) ((uint8_t *) elf + elf->e_shoff);
-
-	esh = sh + (elf->e_shnum * elf->e_shentsize);
-
-	char* strtab;
-	cprintf("======12121=== %d %d\n", elf->e_magic == ELF_MAGIC, elf->e_magic);
-	uint32_t sym_offset1 = 0, sym_size1 = 0, str_offset1 = 0;
-	for (int i = 0; i < elf->e_shnum; i++) {
-		if (sh[i].sh_type == ELF_SHT_SYMTAB) {
-			cprintf("SECHDR ADDR %d\n", (uint32_t) &sh[i]);
-			sym_offset1 = sh[i].sh_offset;
-			sym_size1 = sh[i].sh_size;
-		} else if (sh[i].sh_type == ELF_SHT_STRTAB) {
-			str_offset1 = sh[i].sh_offset;
-		}
-		cprintf("OFFSETT: %d %d %d \n",
-			sym_offset1,
-			sym_size1,
-			str_offset1);
-
-	}
-
-	
-//	char * str = (char*) (elf + sh[elf->e_shstrndx].sh_offset);
-	uint32_t sym_offset = 0, sym_size = 0, str_offset = 0;
-	for (sh_i = sh; sh_i < esh; sh_i++) {
-//		cprintf("==== %x\n", sh_i->sh_name);
-//		cprintf("==== %s\n", &str[sh_i->sh_name]);
-		if (sh_i->sh_type == ELF_SHT_SYMTAB) {
-			cprintf("SECHDR ADDR %d\n", (uint32_t) sh_i);
-			sym_offset = sh_i->sh_offset;
-			sym_size = sh_i->sh_size;
-			elf_sym = (struct Elf32_Sym *)((uint32_t *) elf + sh_i->sh_offset);
-			elf_sym_end = (struct Elf32_Sym *)  ((uint32_t *) elf_sym + sh_i->sh_size);
-			strtab = (char *)  ((uint32_t *) elf + sh[sh_i->sh_link].sh_offset);
-
-		}
-		if (sh_i->sh_type == ELF_SHT_STRTAB) {
-			str_offset = sh_i->sh_offset;
-			// str_size = sh_i->sh_size;
-
-		}
-		else {
-			cprintf("..");
-		}
-	}
-	cprintf("OFFSETT: %d %d %d \n", sym_offset, sym_size, str_offset);
-	for (uint32_t j = 0; j * sizeof(struct Elf32_Sym) < sym_size; j++) {
-		size_t absoffset = sym_offset + j * sizeof(struct Elf32_Sym);               
-	    // memmove(&sym, cbytes + absoffset, sizeof(sym));
-		sym = (struct Elf32_Sym *) elf + absoffset;
-		cprintf("SYMBOL TABLE ENTRY %d (0x%x %d)\n",
-			j,
-			(uint32_t) sym, absoffset);
-		cprintf("st_name = %d", sym->st_name);
-	    if (sym->st_name != 0) {
-		    cprintf(" (%s)", (char *)elf + str_offset + sym->st_name);
-	    }
-	    cprintf("\n");
-	    cprintf("st_other = %d\n", sym->st_other);
-	    cprintf("st_shndx = %d\n", sym->st_shndx);
-	    cprintf("st_value = %p\n", (void *)sym->st_value);
-	    cprintf("st_size = %d\n", sym->st_size);
-	    cprintf("\n");
-	}
+// 		}
+// 		else {
+// 			cprintf("..");
+// 		}
+// 	}
 
 
-	*((int *) 0x00231008) = (int) &cprintf;
-        *((int *) 0x00221004) = (int) &sys_yield;
-        *((int *) 0x00231004) = (int) &sys_yield;
-        *((int *) 0x00241004) = (int) &sys_yield;
-        *((int *) 0x0022100c) = (int) &sys_exit;
-        *((int *) 0x00231010) = (int) &sys_exit;
-        *((int *) 0x0024100c) = (int) &sys_exit;
-}	
+// 		// struct Elf32_Sym *sym = (struct Elf32_Sym *)((uint8_t *)elf + sh[i].sh_offset);
+
+// 		// char *strtab = (char *)((uint8_t *)elf + sh[sh[i].sh_link].sh_offset);
+
+// 	for (; n --> 0; ++sym) { 
+// 		// if (ELF32_ST_TYPE(sym->st_info) != STT_OBJECT) {
+// 		// 	continue;
+// 		// }
+
+// 		sym = (struct Elf32_Sym *) ((uint8_t *)strtab + (int)elf_sym);
+// 		if (sym->st_name != 0) {
+// 		    cprintf(" (%s)", (char *)elf + str_offset + sym->st_name);
+// 	    }
+// 	    cprintf("\n");
+// 	    cprintf("st_other = %d\n", sym->st_other);
+// 	    cprintf("st_shndx = %d\n", sym->st_shndx);
+// 	    cprintf("st_value = %p\n", (void *)sym->st_value);
+// 	    cprintf("st_size = %d\n", sym->st_size);
+// 	    cprintf("\n");
+// 		const char *name = strtab + elf_sym->st_name;
+// 		uintptr_t addr = find_function(name);
+
+// 		if (addr) {
+// 			*((int *)sym->st_value) = addr;
+// 		}
+
+// 	}
+// 	cprintf("OFFSETT: %d %d %d \n", sym_offset, sym_size, str_offset);
+// 	for (uint32_t j = 0; j * sizeof(struct Elf32_Sym) < sym_size; j++) {
+// 		size_t absoffset = sym_offset + j * sizeof(struct Elf32_Sym);               
+// 	    // memmove(&sym, cbytes + absoffset, sizeof(sym));
+// 		sym = (struct Elf32_Sym *) elf + absoffset;
+// 		cprintf("SYMBOL TABLE ENTRY %d (0x%x %d)\n",
+// 			j,
+// 			(uint32_t) sym, absoffset);
+// 		cprintf("st_name = %d", sym->st_name);
+// 	    if (sym->st_name != 0) {
+// 		    cprintf(" (%s)", (char *)elf + str_offset + sym->st_name);
+// 	    }
+// 	    cprintf("\n");
+// 	    cprintf("st_other = %d\n", sym->st_other);
+// 	    cprintf("st_shndx = %d\n", sym->st_shndx);
+// 	    cprintf("st_value = %p\n", (void *)sym->st_value);
+// 	    cprintf("st_size = %d\n", sym->st_size);
+// 	    cprintf("\n");
+// 	}
+
+
+// 	*((int *) 0x00231008) = (int) &cprintf;
+//         *((int *) 0x00221004) = (int) &sys_yield;
+//         *((int *) 0x00231004) = (int) &sys_yield;
+//         *((int *) 0x00241004) = (int) &sys_yield;
+//         *((int *) 0x0022100c) = (int) &sys_exit;
+//         *((int *) 0x00231010) = (int) &sys_exit;
+//         *((int *) 0x0024100c) = (int) &sys_exit;
+// }	
 #endif
 
 //

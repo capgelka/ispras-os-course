@@ -115,7 +115,6 @@ sys_yield:
 .type  sys_exit, @function
 sys_exit:
 	call csys_exit
-	call sched_halt
 	jmp .
 #endif
 
