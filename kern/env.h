@@ -10,6 +10,9 @@ extern struct Env *envs;		// All environments
 extern struct Env *curenv;
 extern struct Segdesc gdt[];
 
+
+void    debug_mem(void);
+void    show_env(struct Env *e);
 void	env_init(void);
 void	env_init_percpu(void);
 int	env_alloc(struct Env **e, envid_t parent_id);

@@ -33,7 +33,9 @@ i386_init(void)
 
 #ifdef CONFIG_KSPACE
 	// Touch all you want.
+	cprintf("ru first");
 	ENV_CREATE_KERNEL_TYPE(prog_test1);
+	cprintf("ed first");
 	ENV_CREATE_KERNEL_TYPE(prog_test2);
 	ENV_CREATE_KERNEL_TYPE(prog_test3);
 #endif

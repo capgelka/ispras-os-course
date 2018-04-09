@@ -22,6 +22,59 @@ static struct Env *env_free_list;	// Free environment list
 
 #define ENVGENSHIFT	12		// >= LOGNENV
 
+
+void show_env (struct Env* env) {
+
+	char* val;
+	switch(env->env_status) {
+
+	case ENV_FREE:
+		val = "FREE";
+		break;
+	case ENV_RUNNABLE:
+		val = "RUNNABLE";
+		break;
+	case ENV_RUNNING:
+		val = "RUNNING";
+		break;
+	default:
+		val = "OTHER";
+	}
+
+
+	cprintf("Addr: %p\nNext: %p\nStatus: %s\n\n",
+		env, env->env_link, val);
+	}
+
+	
+
+
+void
+debug_mem () {
+	cprintf("=============================== \n");
+	cprintf("Arr Size %d\n", NENV);
+	struct Env* env_arr_start = env_array;
+	struct Env* ep = env_arr_start;
+	cprintf("Debug envs \n");
+	do  {
+		
+		show_env(ep);
+		ep = ep->env_link;
+		
+	}  while (ep != env_arr_start);
+	cprintf("-------------------------\n");
+	cprintf("Debug free\n");
+	ep = env_free_list;
+       	do  {
+		
+		show_env(ep);
+		ep = ep->env_link;
+		
+	} while (ep != env_arr_start);
+	cprintf("=============================== \n\n\n");
+	
+}
+
 extern unsigned int bootstacktop;
 
 // Global descriptor table.
@@ -127,13 +180,15 @@ env_init(void)
 		envs[i].env_type = ENV_FREE;
 		envs[i].env_id = 0;
 		if (i != (NENV - 1)) {
-			envs[i].env_link = (envs + i);
+			envs[i].env_link = (envs + i + 1);
 		}
 		else {
 			envs[i].env_link = envs;
 		}
 	}
-	
+
+	cprintf("call init\n\n\n");
+	curenv = envs;
 	// Per-CPU part of the initialization
 	env_init_percpu();
 }
@@ -241,83 +296,16 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 }
 
 
-// static inline struct Secthdr *elf_sheader(struct Elf *hdr) {
-// 	return (struct Secthdr *)((int)hdr + hdr->e_shoff);
-// }
- 
-// static inline struct Secthdr *elf_section(struct Elf *hdr, int idx) {
-// 	return &elf_sheader(hdr)[idx];
-// }
-
-
-// static inline char *elf_str_table(struct Elf *hdr) {
-// 	if(hdr->e_shstrndx == ELF_SHN_UNDEF) return NULL;
-// 	return (char *)hdr + elf_section(hdr, hdr->e_shstrndx)->sh_offset;
-// }
- 
-// static inline char *elf_lookup_string(struct Elf *hdr, int offset) {
-// 	char *strtab = elf_str_table(hdr);
-// 	if(strtab == NULL) return NULL;
-// 	return strtab + offset;
-// }
-
-// static int elf_get_symval(struct Elf *hdr, int table, uint32_t idx) {
-// 	if(table == 0 || idx == 0) return 0; // SHN_UNDEF
-// 	struct Secthdr *symtab = elf_section(hdr, table);
- 
-// 	uint32_t symtab_entries = symtab->sh_size / symtab->sh_entsize;
-// 	if(idx >= symtab_entries) {
-// 		panic("Symbol Index out of Range (%d:%u).\n", table, idx);
-// 		return 100;
-// 	}
- 
-// 	int symaddr = (int)hdr + symtab->sh_offset;
-// 	struct Elf32_Sym *symbol = &((struct Elf32_Sym *)symaddr)[idx];
-
-// 	if(symbol->st_shndx == 0) { // SHN_UNDEF
-// 	// External symbol, lookup value
-// 	struct Secthdr *strtab = elf_section(hdr, symtab->sh_link);
-// 	const char *name = (const char *)hdr + strtab->sh_offset + symbol->st_name;
-
-// 	extern void *elf_lookup_symbol(const char *name);
-// 	void *target = elf_lookup_symbol(name);
-
-// 	if(target == NULL) {
-// 		// Extern symbol not found
-// 		// if(ELF32_ST_BIND(symbol->st_info) & STB_WEAK) {
-// 		// 	// Weak symbol initialized as 0
-// 		// 	return 0;
-// 		// } else {
-// 		// 	panic("Undefined External Symbol : %s.\n", name);
-// 		// 	return ELF_RELOC_ERR;
-// 		// }
-// 		panic("NOT PANIC");
-// 	} else {
-// 		return (int)target;
-// 	}
-
-// 	} else if(symbol->st_shndx == 0xfff1) { // SHN_ABS
-// 		// Absolute symbol
-// 		return symbol->st_value;
-// 	} else {
-// 		// Internally defined symbol
-// 		struct Secthdr *target = elf_section(hdr, symbol->st_shndx);
-// 		return (int)hdr + symbol->st_value + target->sh_offset;
-// 	}
-// }
-
-
 #ifdef CONFIG_KSPACE
 
 
 static void
 bind_functions(struct Env *e, struct Elf *elf)
 {
-	if (!elf->e_shoff) {
-		panic("Section header table is not found");
-	}
 
-	struct Secthdr *sh = (struct Secthdr *)((uint8_t *)elf + elf->e_shoff);
+	struct Secthdr *sh = (struct Secthdr *)(
+		(uint8_t *) elf + elf->e_shoff
+	);
 
 	for (int i = 0; i < elf->e_shnum; ++i) {
 		if (sh[i].sh_type != ELF_SHT_SYMTAB) {
@@ -348,125 +336,7 @@ bind_functions(struct Env *e, struct Elf *elf)
 		}
 	}
 }
-
-// static void
-// bind_functions(struct Env *e, struct Elf *elf)
-// {
-// 	//find_function from kdebug.c should be used
-// 	//LAB 3: Your code here.
-
-
-// 	struct Secthdr *sh, *esh, *sh_i;
-// 	struct Elf32_Sym *sym, *elf_sym, *elf_sym_end;
-// 	sym = 0;
-// 	elf_sym = 0;
-
-// 	sh = (struct Secthdr *) ((uint8_t *) elf + elf->e_shoff);
-
-// 	esh = sh + (elf->e_shnum * elf->e_shentsize);
-
-// 	char* strtab =0;
-// 	// cprintf("======12121=== %d %d\n", elf->e_magic == ELF_MAGIC, elf->e_magic);
-// 	// uint32_t sym_offset1 = 0, sym_size1 = 0, str_offset1 = 0;
-// 	// for (int i = 0; i < elf->e_shnum; i++) {
-// 	// 	if (sh[i].sh_type == ELF_SHT_SYMTAB) {
-// 	// 		cprintf("SECHDR ADDR %d\n", (uint32_t) &sh[i]);
-// 	// 		sym_offset1 = sh[i].sh_offset;
-// 	// 		sym_size1 = sh[i].sh_size;
-// 	// 	} else if (sh[i].sh_type == ELF_SHT_STRTAB) {
-// 	// 		str_offset1 = sh[i].sh_offset;
-// 	// 	}
-// 	// 	cprintf("OFFSETT: %d %d %d \n",
-// 	// 		sym_offset1,
-// 	// 		sym_size1,
-// 	// 		str_offset1);
-
-// 	// }
-// 	int n =0;
 	
-// //	char * str = (char*) (elf + sh[elf->e_shstrndx].sh_offset);
-// 	uint32_t sym_offset = 0, sym_size = 0, str_offset = 0;
-// 	for (sh_i = sh; sh_i < esh; sh_i++) {
-// //		cprintf("==== %x\n", sh_i->sh_name);
-// //		cprintf("==== %s\n", &str[sh_i->sh_name]);
-// 		if (sh_i->sh_type == ELF_SHT_SYMTAB) {
-// 			cprintf("SECHDR ADDR %d\n", (uint32_t) sh_i);
-// 			sym_offset = sh_i->sh_offset;
-// 			sym_size = sh_i->sh_entsize;
-// 			elf_sym = (struct Elf32_Sym *)((uint8_t *) elf + sh_i->sh_offset);
-// 			elf_sym_end = (struct Elf32_Sym *)  ((uint8_t *) elf_sym + sh_i->sh_size);
-// 			strtab = (char *)  ((uint8_t *) elf + sh[sh_i->sh_link].sh_offset);
-// 			struct Elf32_Sym *sym = (struct Elf32_Sym *)((uint8_t *) elf + sh_i->sh_offset);
-// 			cprintf("TEST? %d\n", sym == elf_sym);
-// 			n = sh_i->sh_size / sh_i->sh_entsize;
-// 		}
-// 		if (sh_i->sh_type == ELF_SHT_STRTAB) {
-// 			str_offset = sh_i->sh_offset;
-// 			// str_size = sh_i->sh_size;
-
-// 		}
-// 		else {
-// 			cprintf("..");
-// 		}
-// 	}
-
-
-// 		// struct Elf32_Sym *sym = (struct Elf32_Sym *)((uint8_t *)elf + sh[i].sh_offset);
-
-// 		// char *strtab = (char *)((uint8_t *)elf + sh[sh[i].sh_link].sh_offset);
-
-// 	for (; n --> 0; ++sym) { 
-// 		// if (ELF32_ST_TYPE(sym->st_info) != STT_OBJECT) {
-// 		// 	continue;
-// 		// }
-
-// 		sym = (struct Elf32_Sym *) ((uint8_t *)strtab + (int)elf_sym);
-// 		if (sym->st_name != 0) {
-// 		    cprintf(" (%s)", (char *)elf + str_offset + sym->st_name);
-// 	    }
-// 	    cprintf("\n");
-// 	    cprintf("st_other = %d\n", sym->st_other);
-// 	    cprintf("st_shndx = %d\n", sym->st_shndx);
-// 	    cprintf("st_value = %p\n", (void *)sym->st_value);
-// 	    cprintf("st_size = %d\n", sym->st_size);
-// 	    cprintf("\n");
-// 		const char *name = strtab + elf_sym->st_name;
-// 		uintptr_t addr = find_function(name);
-
-// 		if (addr) {
-// 			*((int *)sym->st_value) = addr;
-// 		}
-
-// 	}
-// 	cprintf("OFFSETT: %d %d %d \n", sym_offset, sym_size, str_offset);
-// 	for (uint32_t j = 0; j * sizeof(struct Elf32_Sym) < sym_size; j++) {
-// 		size_t absoffset = sym_offset + j * sizeof(struct Elf32_Sym);               
-// 	    // memmove(&sym, cbytes + absoffset, sizeof(sym));
-// 		sym = (struct Elf32_Sym *) elf + absoffset;
-// 		cprintf("SYMBOL TABLE ENTRY %d (0x%x %d)\n",
-// 			j,
-// 			(uint32_t) sym, absoffset);
-// 		cprintf("st_name = %d", sym->st_name);
-// 	    if (sym->st_name != 0) {
-// 		    cprintf(" (%s)", (char *)elf + str_offset + sym->st_name);
-// 	    }
-// 	    cprintf("\n");
-// 	    cprintf("st_other = %d\n", sym->st_other);
-// 	    cprintf("st_shndx = %d\n", sym->st_shndx);
-// 	    cprintf("st_value = %p\n", (void *)sym->st_value);
-// 	    cprintf("st_size = %d\n", sym->st_size);
-// 	    cprintf("\n");
-// 	}
-
-
-// 	*((int *) 0x00231008) = (int) &cprintf;
-//         *((int *) 0x00221004) = (int) &sys_yield;
-//         *((int *) 0x00231004) = (int) &sys_yield;
-//         *((int *) 0x00241004) = (int) &sys_yield;
-//         *((int *) 0x0022100c) = (int) &sys_exit;
-//         *((int *) 0x00231010) = (int) &sys_exit;
-//         *((int *) 0x0024100c) = (int) &sys_exit;
-// }	
 #endif
 
 //
@@ -581,7 +451,10 @@ env_destroy(struct Env *e)
 {
 	//LAB 3: Your code here.
 	env_free(e);
-
+	cprintf("=== %d\n", curenv==e);
+	if(curenv == e)	{
+		sched_yield();
+	}
 	cprintf("Destroyed the only environment - nothing more to do!\n");
 	while (1)
 		monitor(NULL);
