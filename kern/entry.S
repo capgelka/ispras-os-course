@@ -108,15 +108,15 @@ _exit_syscall:
 	movl %esp, esp_reg
 	movl $0x0,%ebp
 	movl $(bootstacktop),%esp
-	pushl $GD_KD
-	pushl esp_reg
-	pushfl
-	pushl $GD_KT
-	pushl ret_eip
-	pushl $0x0
-	pushl $0x0
-	pushl esp_reg
-	pushl ebp_reg
+	# pushl $GD_KD
+	# pushl esp_reg
+	# pushfl
+	# pushl $GD_KT
+	# pushl ret_eip
+	# pushl $0x0
+	# pushl $0x0
+	# pushl esp_reg
+	# pushl ebp_reg
 	pushl _g_ret
 	ret
 
@@ -134,7 +134,7 @@ sys_yield:
 .globl sys_exit
 .type  sys_exit, @function
 sys_exit:
-	#call _exit_syscall
+	call _exit_syscall
 	call csys_exit
 	jmp .
 #endif

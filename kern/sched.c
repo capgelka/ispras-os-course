@@ -28,32 +28,55 @@ sched_yield(void)
 	//LAB 3: Your code here.
 	//sched_halt();
 	debug_mem();
-	struct Env* next_env = curenv;
-	while (next_env->env_link) {
-		next_env = next_env->env_link;
-		cprintf("!!!!!possible env enty point: 0x%x\n",
-			next_env->env_tf.tf_eip);
-
-		if (next_env->env_status == ENV_RUNNABLE ||
-			next_env == curenv) {
-					cprintf("111111break! %d %d\n",next_env->env_status == ENV_RUNNABLE, next_env == curenv);
-			break;
+	//show_env(curenv);
+	struct Env* next_env = NULL;
+	int curr = (find_env_num(curenv) + 1) % NENV;
+	for (int i = curr; i < NENV; i++) {
+		if (envs[i].env_status == ENV_RUNNABLE) {
+			next_env = &envs[i];
+			goto run_env;
 		}
-		cprintf("111111not break! %d %d\n",next_env->env_status == ENV_RUNNABLE, next_env == curenv);
-		/* code */
 	}
-
-	if ((!next_env || next_env->env_status != ENV_RUNNABLE) &&
-		curenv->env_status == ENV_RUNNING) {
-		cprintf("env not changed!\n");
+	for (int i = 0; i < curr; i++) {
+		if (envs[i].env_status == ENV_RUNNABLE) {
+			next_env = &envs[i];
+			goto run_env;
+		}
+	}
+	if(!next_env && curenv->env_status == ENV_RUNNING) {
 		next_env = curenv;
-	} else {
-		cprintf("else in scheduler\n");
-		//next_env = envs;
 	}
-	//env_run(envs);
-	cprintf("ENV GOIG TO RUN : %p, curenv: %p\n\n\n", next_env, curenv); 
-	env_run(next_env);
+	// while (next_env->env_link) {
+	// 	next_env = next_env->env_link;
+	// 	cprintf("!!!!!possible env enty point: 0x%x\n",
+	// 		next_env->env_tf.tf_eip);
+
+	// 	if (next_env->env_status == ENV_RUNNABLE ||
+	// 		next_env == curenv) {
+	// 				cprintf("111111break! %d %d\n",next_env->env_status == ENV_RUNNABLE, next_env == curenv);
+	// 		break;
+	// 	}
+	// 	cprintf("111111not break! %d %d\n",next_env->env_status == ENV_RUNNABLE, next_env == curenv);
+	// 	/* code */
+	// }
+
+	// if ((!next_env || next_env->env_status != ENV_RUNNABLE) &&
+	// 	curenv->env_status == ENV_RUNNING) {
+	// 	cprintf("env not changed!\n");
+	// 	next_env = curenv;
+	// } else {
+	// 	cprintf("else in scheduler\n");
+	// 	//next_env = envs;
+	// }
+	// //env_run(envs);
+	// cprintf("ENV GOIG TO RUN : %p, curenv: %p\n\n\n", next_env, curenv);
+	// // debug_mem();
+run_env:
+	if (next_env) {
+		// cprintf("WTF!&&&\n\nj]n");
+		// show_env(next_env);
+		env_run(next_env);
+	}
 	// sched_halt never returns
 	sched_halt();
 }
@@ -65,20 +88,26 @@ void
 sched_halt(void)
 {
 	int i;
-
+	cprintf("HALTING\n");
 	// For debugging and testing purposes, if there are no runnable
 	// environments in the system, then drop into the kernel monitor.
 	for (i = 0; i < NENV; i++) {
 		if ((envs[i].env_status == ENV_RUNNABLE ||
-		     envs[i].env_status == ENV_RUNNING))
+		     envs[i].env_status == ENV_RUNNING)) {
+
+			show_env(&envs[i]);
+			debug_mem();
 			break;
+		}
+
 	}
+	cprintf("%d %d", i, NENV);
 	if (i == NENV) {
 		cprintf("No runnable environments in the system!\n");
 		while (1)
 			monitor(NULL);
 	}
-
+		cprintf("HALTING\n");
 	// Mark that no environment is running on CPU
 	curenv = NULL;
 
@@ -91,5 +120,6 @@ sched_halt(void)
 		"sti\n"
 		"hlt\n"
 	: : "a" (cpu_ts.ts_esp0));
+	cprintf("HALTED\n");
 }
 

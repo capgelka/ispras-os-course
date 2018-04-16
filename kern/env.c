@@ -20,7 +20,20 @@ struct Env *envs = env_array;		// All environments
 static struct Env *env_free_list;	// Free environment list
 					// (linked by Env->env_link)
 
+static uint32_t entry_points[NENV];
+
 #define ENVGENSHIFT	12		// >= LOGNENV
+
+
+int find_env_num(struct Env* env) {
+	for (int i = 0; i<NENV; i++) {
+		if (&env_array[i] == env) {
+			return i;
+		}
+
+	}
+	return -1;
+}
 
 
 void show_env (struct Env* env) {
@@ -42,8 +55,8 @@ void show_env (struct Env* env) {
 	}
 
 
-	cprintf("Addr: %p\nNext: %p\nStatus: %s\n\n",
-		env, env->env_link, val);
+	cprintf("Addr: %p\nNext: %p\nStatus: %s (%d)\n\n",
+		env, env->env_link, val, env->env_status);
 	}
 
 	
@@ -61,7 +74,7 @@ debug_mem () {
 		show_env(ep);
 		ep = ep->env_link;
 		
-	}  while (ep != env_arr_start);
+	}  while (ep != env_arr_start && ep != NULL);
 	cprintf("-------------------------\n");
 	cprintf("Debug free\n");
 	ep = env_free_list;
@@ -70,7 +83,7 @@ debug_mem () {
 		show_env(ep);
 		ep = ep->env_link;
 		
-	} while (ep != env_arr_start);
+	} while (ep != env_arr_start && ep != NULL);
 	cprintf("=============================== \n\n\n");
 	
 }
@@ -183,12 +196,15 @@ env_init(void)
 			envs[i].env_link = (envs + i + 1);
 		}
 		else {
-			envs[i].env_link = envs;
+			envs[i].env_link = envs; //NULL; //envs;
 		}
+		// cprintf("==== %d \n", i);
+		// show_env(&envs[i]);
 	}
 
-	cprintf("call init\n\n\n");
-	curenv = envs;
+	// cprintf("call init\n\n\n");
+	curenv = &envs[NENV-1];
+	// debug_mem();
 	// Per-CPU part of the initialization
 	env_init_percpu();
 }
@@ -397,6 +413,10 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 
 	e->env_tf.tf_eip = elf->e_entry;
 
+	// cprintf("^^^^^^^ %d\n", e->env_id);
+	entry_points[find_env_num(e)] = elf->e_entry;
+
+
 	
 #ifdef CONFIG_KSPACE
 	// Uncomment this for task №5.
@@ -453,6 +473,8 @@ env_destroy(struct Env *e)
 	env_free(e);
 	cprintf("=== %d\n", curenv==e);
 	if(curenv == e)	{
+		// e->env_tf.tf_eip = entry_points[find_env_num(e)];
+		curenv = NULL;
 		sched_yield();
 	}
 	cprintf("Destroyed the only environment - nothing more to do!\n");
@@ -562,7 +584,7 @@ env_run(struct Env *e)
 	curenv = e;
 	e->env_type = ENV_RUNNING;
 	e->env_runs++;
-	cprintf("EIP 0x%x", curenv->env_tf.tf_eip);
+	cprintf("EIP 0x%x\n", curenv->env_tf.tf_eip);
 	env_pop_tf(&(curenv->env_tf));
 	uint32_t eip;
 	__asm __volatile("movl %%ebp,%0" : "=r" (eip));
