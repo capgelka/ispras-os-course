@@ -413,7 +413,6 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 
 	e->env_tf.tf_eip = elf->e_entry;
 
-	// cprintf("^^^^^^^ %d\n", e->env_id);
 	entry_points[find_env_num(e)] = elf->e_entry;
 
 
@@ -471,7 +470,7 @@ env_destroy(struct Env *e)
 {
 	//LAB 3: Your code here.
 	env_free(e);
-	cprintf("=== %d\n", curenv==e);
+	// cprintf("=== %d\n", curenv==e);
 	if(curenv == e)	{
 		// e->env_tf.tf_eip = entry_points[find_env_num(e)];
 		curenv = NULL;
@@ -508,10 +507,10 @@ void
 env_pop_tf(struct Trapframe *tf)
 {
 #ifdef CONFIG_KSPACE
-	cprintf("start pop\n");
+	// cprintf("start pop\n");
 	static uintptr_t eip = 0;
 	eip = tf->tf_eip;
-	cprintf("eip: 0x%x\n", eip);
+	// cprintf("eip: 0x%x\n", eip);
 	asm volatile (
 		"mov %c[ebx](%[tf]), %%ebx \n\t"
 		"mov %c[ecx](%[tf]), %%ecx \n\t"
@@ -584,11 +583,11 @@ env_run(struct Env *e)
 	curenv = e;
 	e->env_type = ENV_RUNNING;
 	e->env_runs++;
-	cprintf("EIP 0x%x\n", curenv->env_tf.tf_eip);
+	// cprintf("EIP 0x%x\n", curenv->env_tf.tf_eip);
 	env_pop_tf(&(curenv->env_tf));
 	uint32_t eip;
 	__asm __volatile("movl %%ebp,%0" : "=r" (eip));
 
-	cprintf("EIP after pop %d", eip);
+	// cprintf("EIP after pop %d", eip);
 }
 

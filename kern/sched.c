@@ -27,7 +27,7 @@ sched_yield(void)
 
 	//LAB 3: Your code here.
 	//sched_halt();
-	debug_mem();
+	// debug_mem();
 	//show_env(curenv);
 	struct Env* next_env = NULL;
 	int curr = (find_env_num(curenv) + 1) % NENV;
@@ -43,7 +43,9 @@ sched_yield(void)
 			goto run_env;
 		}
 	}
-	if(!next_env && curenv->env_status == ENV_RUNNING) {
+	if(!next_env && 
+		(curenv->env_status == ENV_RUNNING || 
+			curenv->env_status == ENV_RUNNABLE)) {
 		next_env = curenv;
 	}
 	// while (next_env->env_link) {
@@ -88,26 +90,26 @@ void
 sched_halt(void)
 {
 	int i;
-	cprintf("HALTING\n");
+	// cprintf("HALTING\n");
 	// For debugging and testing purposes, if there are no runnable
 	// environments in the system, then drop into the kernel monitor.
 	for (i = 0; i < NENV; i++) {
 		if ((envs[i].env_status == ENV_RUNNABLE ||
 		     envs[i].env_status == ENV_RUNNING)) {
 
-			show_env(&envs[i]);
-			debug_mem();
+			// show_env(&envs[i]);
+			// debug_mem();
 			break;
 		}
 
 	}
-	cprintf("%d %d", i, NENV);
+	// cprintf("%d %d", i, NENV);
 	if (i == NENV) {
 		cprintf("No runnable environments in the system!\n");
 		while (1)
 			monitor(NULL);
 	}
-		cprintf("HALTING\n");
+		// cprintf("HALTING\n");
 	// Mark that no environment is running on CPU
 	curenv = NULL;
 
@@ -120,6 +122,6 @@ sched_halt(void)
 		"sti\n"
 		"hlt\n"
 	: : "a" (cpu_ts.ts_esp0));
-	cprintf("HALTED\n");
+	// cprintf("HALTED\n");
 }
 
