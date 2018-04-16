@@ -12,6 +12,7 @@
 #include <kern/monitor.h>
 #include <kern/sched.h>
 #include <kern/cpu.h>
+#include <kern/kdebug.h>
 
 struct Env env_array[NENV];
 struct Env *curenv = NULL;
@@ -19,7 +20,72 @@ struct Env *envs = env_array;		// All environments
 static struct Env *env_free_list;	// Free environment list
 					// (linked by Env->env_link)
 
+static uint32_t entry_points[NENV];
+
 #define ENVGENSHIFT	12		// >= LOGNENV
+
+
+int find_env_num(struct Env* env) {
+	for (int i = 0; i<NENV; i++) {
+		if (&env_array[i] == env) {
+			return i;
+		}
+
+	}
+	return -1;
+}
+
+
+void show_env (struct Env* env) {
+
+	char* val;
+	switch(env->env_status) {
+
+	case ENV_FREE:
+		val = "FREE";
+		break;
+	case ENV_RUNNABLE:
+		val = "RUNNABLE";
+		break;
+	case ENV_RUNNING:
+		val = "RUNNING";
+		break;
+	default:
+		val = "OTHER";
+	}
+
+
+	cprintf("Addr: %p\nNext: %p\nStatus: %s (%d)\n\n",
+		env, env->env_link, val, env->env_status);
+}
+
+	
+
+
+void
+debug_mem () {
+	cprintf("=============================== \n");
+	cprintf("Arr Size %d\n", NENV);
+	struct Env* env_arr_start = env_array;
+	struct Env* ep = env_arr_start;
+	cprintf("Debug envs \n");
+	do  {	
+		show_env(ep);
+		ep++;
+		
+	}  while (ep != &envs[NENV-1]);
+	cprintf("-------------------------\n");
+	cprintf("Debug free\n");
+	ep = env_free_list;
+       	do  {
+		
+		show_env(ep);
+		ep = ep->env_link;
+		
+	} while (ep != env_arr_start && ep != NULL);
+	cprintf("=============================== \n\n\n");
+	
+}
 
 extern unsigned int bootstacktop;
 
@@ -121,7 +187,23 @@ env_init(void)
 {
 	// Set up envs array
 	//LAB 3: Your code here.
-	
+	env_free_list = envs;
+	for (int i = 0; i < NENV; i++) {
+		envs[i].env_type = ENV_FREE;
+		envs[i].env_id = 0;
+		if (i != (NENV - 1)) {
+			envs[i].env_link = (envs + i + 1);
+		}
+		else {
+			envs[i].env_link = envs; //NULL; //envs;
+		}
+		// cprintf("==== %d \n", i);
+		// show_env(&envs[i]);
+	}
+
+	// cprintf("call init\n\n\n");
+	curenv = &envs[NENV-1];
+	// debug_mem();
 	// Per-CPU part of the initialization
 	env_init_percpu();
 }
@@ -147,6 +229,16 @@ env_init_percpu(void)
 	lldt(0);
 }
 
+int
+find_env_number(struct Env* env) {
+	for (int i = 0; i < NENV; i++) {
+		if (&envs[i] == env) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 //
 // Allocates and initializes a new environment.
 // On success, the new environment is stored in *newenv_store.
@@ -159,6 +251,7 @@ int
 env_alloc(struct Env **newenv_store, envid_t parent_id)
 {
 	int32_t generation;
+	int8_t offset_multiplier;
 	struct Env *e;
 
 	if (!(e = env_free_list)) {
@@ -200,7 +293,11 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	e->env_tf.tf_ss = GD_KD | 0;
 	e->env_tf.tf_cs = GD_KT | 0;
 	//LAB 3: Your code here.
-	// e->env_tf.tf_esp = 0x210000;
+	offset_multiplier = find_env_number(e);
+	if (e < 0) {
+		panic("can't find environment with addr %p", e);
+	}
+	e->env_tf.tf_esp = 0x210000 - offset_multiplier * 40960;
 #else
 #endif
 
@@ -223,15 +320,38 @@ bind_functions(struct Env *e, struct Elf *elf)
 	//find_function from kdebug.c should be used
 	//LAB 3: Your code here.
 
-	/*
-	*((int *) 0x00231008) = (int) &cprintf;
-	*((int *) 0x00221004) = (int) &sys_yield;
-	*((int *) 0x00231004) = (int) &sys_yield;
-	*((int *) 0x00241004) = (int) &sys_yield;
-	*((int *) 0x0022100c) = (int) &sys_exit;
-	*((int *) 0x00231010) = (int) &sys_exit;
-	*((int *) 0x0024100c) = (int) &sys_exit;
-	*/
+	struct Secthdr *sh = (struct Secthdr *)(
+		(uint8_t *) elf + elf->e_shoff
+	);
+
+	for (int i = 0; i < elf->e_shnum; ++i) {
+		if (sh[i].sh_type != ELF_SHT_SYMTAB) {
+			continue;
+		}
+
+		int n = sh[i].sh_size / sh[i].sh_entsize;
+		struct Elf32_Sym *sym = (struct Elf32_Sym *)((uint8_t *)elf + sh[i].sh_offset);
+		char *strtab = (char *)((uint8_t *)elf + sh[sh[i].sh_link].sh_offset);
+
+		for (; n --> 0; ++sym) {
+			if (ELF32_ST_TYPE(sym->st_info) != STT_OBJECT) {
+				continue;
+			}
+
+			const char *name = strtab + sym->st_name;
+				    cprintf("\n");
+	    // cprintf("st_other = %d\n", sym->st_other);
+	    // cprintf("st_shndx = %d\n", sym->st_shndx);
+	    // cprintf("st_value = %p\n", (void *)sym->st_value);
+	    // cprintf("st_size = %d\n", sym->st_size);
+	    // cprintf("\n");
+			uintptr_t addr = find_function(name);
+
+			if (addr) {
+				*((int *)sym->st_value) = addr;
+			}
+		}
+	}
 }
 #endif
 
@@ -278,6 +398,24 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	//  What?  (See env_run() and env_pop_tf() below.)
 
 	//LAB 3: Your code here.
+
+	struct Elf* elf = (struct Elf *) binary;
+	struct Proghdr *ph, *eph;
+
+	ph = (struct Proghdr *) ((uint8_t *) elf + elf->e_phoff);
+	eph = ph + (elf->e_phnum * elf->e_phentsize);
+
+	for (; ph < eph; ph++)
+		if (ph->p_type == ELF_PROG_LOAD) {
+			memset((void *) ph->p_va, 0, ph->p_memsz);
+			memcpy((void *) ph->p_va, binary + ph->p_offset, ph->p_filesz);
+		}
+
+	e->env_tf.tf_eip = elf->e_entry;
+
+	entry_points[find_env_num(e)] = elf->e_entry;
+
+
 	
 #ifdef CONFIG_KSPACE
 	// Uncomment this for task №5.
@@ -296,6 +434,15 @@ void
 env_create(uint8_t *binary, size_t size, enum EnvType type)
 {
 	//LAB 3: Your code here.
+	int ret_code = 0;
+	struct Env* env;
+
+	ret_code = env_alloc(&env, 0);
+	if (ret_code) {
+		panic("env_alloc: %i", ret_code);
+	}
+	env->env_type = type;
+	load_icode(env, binary, size);
 }
 
 //
@@ -323,7 +470,12 @@ env_destroy(struct Env *e)
 {
 	//LAB 3: Your code here.
 	env_free(e);
-
+	// cprintf("=== %d\n", curenv==e);
+	if(curenv == e)	{
+		// e->env_tf.tf_eip = entry_points[find_env_num(e)];
+		curenv = NULL;
+		sched_yield();
+	}
 	cprintf("Destroyed the only environment - nothing more to do!\n");
 	while (1)
 		monitor(NULL);
@@ -423,6 +575,16 @@ env_run(struct Env *e)
 	//
 	//LAB 3: Your code here.
 
+	if (curenv && curenv->env_status == ENV_RUNNING) {
+		curenv->env_status = ENV_RUNNABLE;
+	}
+	curenv = e;
+	curenv->env_status = ENV_RUNNING;
+	curenv->env_runs++;
+	// cprintf("EIP 0x%x\n", curenv->env_tf.tf_eip);
+	env_pop_tf(&(curenv->env_tf));
+	uint32_t eip;
+	__asm __volatile("movl %%ebp,%0" : "=r" (eip));
 
 	env_pop_tf(&e->env_tf);
 }

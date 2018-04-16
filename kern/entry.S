@@ -102,6 +102,26 @@ _generall_syscall:
 	pushl _g_ret
 	ret
 
+_exit_syscall:
+	popl  _g_ret
+	popl ret_eip
+	movl %ebp, ebp_reg
+	movl %esp, esp_reg
+	movl $0x0,%ebp
+	movl $(bootstacktop),%esp
+	# pushl $GD_KD
+	# pushl esp_reg
+	# pushfl
+	# pushl $GD_KT
+	# pushl ret_eip
+	# pushl $0x0
+	# pushl $0x0
+	# pushl esp_reg
+	# pushl ebp_reg
+	pushl _g_ret
+	ret
+
+
 .stabs "sys_yield:",36,0,0,sys_yield
 .globl sys_yield
 .type  sys_yield, @function
@@ -115,6 +135,7 @@ sys_yield:
 .globl sys_exit
 .type  sys_exit, @function
 sys_exit:
+	call _exit_syscall
 	call csys_exit
 	jmp .
 #endif
@@ -127,6 +148,6 @@ sys_exit:
 	.globl		bootstack
 bootstack:
 	.space		KSTKSIZE
-	.globl		bootstacktop   
+	.globl		bootstacktop
 bootstacktop:
 

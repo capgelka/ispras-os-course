@@ -49,7 +49,7 @@ extern const char __STABSTR_END__[];		// End of string table
 //
 static void
 stab_binsearch(const struct Stab *stabs, int *region_left, int *region_right,
-	       int type, uintptr_t addr)
+			int type, uintptr_t addr)
 {
 	int l = *region_left, r = *region_right, any_matches = 0;
 
@@ -180,6 +180,13 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	//	which one.
 	// Your code here.
 
+	stab_binsearch(stabs, &lline, &rline, N_SLINE, addr);
+
+	if (lline != rline) {
+		return -1;
+	} else {
+		info->eip_line = stabs[lline].n_desc;
+	}
 
 	// Search backwards from the line number for the relevant filename
 	// stab.
@@ -208,10 +215,103 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 uintptr_t
 find_function(const char * const fname)
 {
+
+	// В них по адресам глобальных указателей на функции записываются адреса функций ядра.
+	// Необходимо выполнять аналогичные действия автоматически, чтобы процессам был доступен
+	// не только наперед заданный набор функций ядра, но и любые другие необходимые им функции.
+	// Для этого необходимо сначала получить адреса глобальных переменных с конкретными названиями.
+	// Сейчас они получены из файлов obj/prog/test1.sym и obj/prog/test2.sym,
+	// и могут не совпадать с теми, которые будут сгенерированы в вашем случае.
+	// В функции bind_functions нужно получать адреса глобальных переменных
+	// (подобно тому, как это делают программы nm -n, objdump -x),
+	// и каждой глобальной переменной, чьё имя совпадает с именем одной из функций ядра,
+	// присваивать адрес последней.
+	// Адреса функций ядра должны быть получены из отладочной информации,
+	// с которой вы уже научились работать в прошлой рабораторной работе.
+	// Для этого необходимо реализовать функцию find_function (kern/kdebug.c).
+	// Строковые имена функций хранятся в stabstr, их адреса в stab (поле n_value).
+
+	// Примечание: обратите внимание на функции в файле lib/string.c,
+	// на раздел Symbol Table в спецификации Elf формата.
+
 	// const struct Stab *stabs = __STAB_BEGIN__, *stab_end = __STAB_END__;
 	// const char *stabstr = __STABSTR_BEGIN__, *stabstr_end = __STABSTR_END__;
 	//LAB 3: Your code here.
 
-	return 0;
+	// int lfile, rfile, lfun, rfun, lline, rline;
+	// int l, r;
+
+	// l = 0;
+	// r = (stab_end - stabs) - 1;
+	// for (l; i < r; ++i)
+	// {
+	// 	if (stabs[l].n_type == N_FUN)
+	// 	{
+	// 		cprintf("%i \n", l);
+	// 	}
+	// 	/* code */
+	// }
+	// lfile = 0;
+	// rfile = (stab_end - stabs) - 1;
+	// stab_binsearch(stabs, &lfile, &rfile, N_SO, addr);
+	// if (lfile == 0)
+	// 	return -1;
+
+	// // Search within that file's stabs for the function definition
+	// // (N_FUN).
+	// lfun = lfile;
+	// rfun = rfile;
+	// stab_binsearch(stabs, &lfun, &rfun, N_FUN, addr);
+
+	// if (lfun <= rfun) {
+	// 	// stabs[lfun] points to the function name
+	// 	// in the string table, but check bounds just in case.
+	// 	if (stabs[lfun].n_strx < stabstr_end - stabstr)
+	// 		info->eip_fn_name = stabstr + stabs[lfun].n_strx;
+	// 	info->eip_fn_addr = stabs[lfun].n_value;
+	// 	addr -= info->eip_fn_addr;
+	// 	// Search within the function definition for the line number.
+	// 	lline = lfun;
+	// 	rline = rfun;
+	// } else {
+	// 	// Couldn't find function stab!  Maybe we're in an assembly
+	// 	// file.  Search the whole file for the line number.
+	// 	info->eip_fn_addr = addr;
+	// 	lline = lfile;
+	// 	rline = rfile;
+	// }
+	// // Ignore stuff after the colon.
+	// info->eip_fn_namelen = strfind(info->eip_fn_name, ':') - info->eip_fn_name;
+
+    const char *stabstr = __STABSTR_BEGIN__;
+    //////////////////////////
+ 
+    if (__STABSTR_END__ <= stabstr || __STABSTR_END__[-1] != 0) {
+        return 0;
+    }
+ 
+    size_t fname_len = strlen(fname);
+ 
+    const struct Stab *stab;
+ 
+    for (stab = __STAB_BEGIN__; stab != __STAB_END__; ++stab) {
+        if (stab->n_type != N_FUN) {
+            continue;
+        }
+ 
+        const char *fullname = stabstr + stab->n_strx;
+ 
+        int fullname_len = strfind(fullname, ':') - fullname;
+ 
+        if (fname_len != fullname_len) {
+            continue;
+        }
+ 
+        if (strncmp(fname, stabstr + stab->n_strx, fname_len) == 0) {
+            return stab->n_value;
+        }
+    }
+ 
+    return 0;
 }
 
