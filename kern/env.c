@@ -57,7 +57,7 @@ void show_env (struct Env* env) {
 
 	cprintf("Addr: %p\nNext: %p\nStatus: %s (%d)\n\n",
 		env, env->env_link, val, env->env_status);
-	}
+}
 
 	
 
@@ -69,12 +69,11 @@ debug_mem () {
 	struct Env* env_arr_start = env_array;
 	struct Env* ep = env_arr_start;
 	cprintf("Debug envs \n");
-	do  {
-		
+	do  {	
 		show_env(ep);
-		ep = ep->env_link;
+		ep++;
 		
-	}  while (ep != env_arr_start && ep != NULL);
+	}  while (ep != &envs[NENV-1]);
 	cprintf("-------------------------\n");
 	cprintf("Debug free\n");
 	ep = env_free_list;
@@ -538,7 +537,6 @@ env_pop_tf(struct Trapframe *tf)
 //		  [esp]"i"(offsetof(struct Trapframe, tf_regs.reg_oesp))
 		  [esp]"i"(offsetof(struct Trapframe, tf_esp))
 		: "cc", "memory", "ebx", "ecx", "edx", "esi", "edi" );
-	cprintf("AFTER ASM\n");
 #else
 #endif
 	panic("BUG");  /* mostly to placate the compiler */
@@ -578,11 +576,11 @@ env_run(struct Env *e)
 	//LAB 3: Your code here.
 
 	if (curenv && curenv->env_status == ENV_RUNNING) {
-		curenv->env_type = ENV_RUNNABLE;
+		curenv->env_status = ENV_RUNNABLE;
 	}
 	curenv = e;
-	e->env_type = ENV_RUNNING;
-	e->env_runs++;
+	curenv->env_status = ENV_RUNNING;
+	curenv->env_runs++;
 	// cprintf("EIP 0x%x\n", curenv->env_tf.tf_eip);
 	env_pop_tf(&(curenv->env_tf));
 	uint32_t eip;

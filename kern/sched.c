@@ -27,7 +27,7 @@ sched_yield(void)
 
 	//LAB 3: Your code here.
 	//sched_halt();
-	// debug_mem();
+	//debug_mem();
 	//show_env(curenv);
 	struct Env* next_env = NULL;
 	int curr = (find_env_num(curenv) + 1) % NENV;
@@ -48,35 +48,9 @@ sched_yield(void)
 			curenv->env_status == ENV_RUNNABLE)) {
 		next_env = curenv;
 	}
-	// while (next_env->env_link) {
-	// 	next_env = next_env->env_link;
-	// 	cprintf("!!!!!possible env enty point: 0x%x\n",
-	// 		next_env->env_tf.tf_eip);
 
-	// 	if (next_env->env_status == ENV_RUNNABLE ||
-	// 		next_env == curenv) {
-	// 				cprintf("111111break! %d %d\n",next_env->env_status == ENV_RUNNABLE, next_env == curenv);
-	// 		break;
-	// 	}
-	// 	cprintf("111111not break! %d %d\n",next_env->env_status == ENV_RUNNABLE, next_env == curenv);
-	// 	/* code */
-	// }
-
-	// if ((!next_env || next_env->env_status != ENV_RUNNABLE) &&
-	// 	curenv->env_status == ENV_RUNNING) {
-	// 	cprintf("env not changed!\n");
-	// 	next_env = curenv;
-	// } else {
-	// 	cprintf("else in scheduler\n");
-	// 	//next_env = envs;
-	// }
-	// //env_run(envs);
-	// cprintf("ENV GOIG TO RUN : %p, curenv: %p\n\n\n", next_env, curenv);
-	// // debug_mem();
 run_env:
 	if (next_env) {
-		// cprintf("WTF!&&&\n\nj]n");
-		// show_env(next_env);
 		env_run(next_env);
 	}
 	// sched_halt never returns
