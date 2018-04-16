@@ -12,7 +12,7 @@ rtc_init(void)
     outb(IO_RTC_CMND, RTC_BREG);
     uint8_t curr_value = inb(IO_RTC_DATA);
     cprintf("===== %x\n", curr_value);
-    curr_value |= 0x00000010;
+    curr_value |= 0b01000000;
     outb(IO_RTC_DATA, curr_value);
     cprintf("===== %x\n", curr_value);
 
