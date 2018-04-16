@@ -24,10 +24,20 @@ struct Command {
 static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
+	{ "debug",  "Display debug string", mon_debug },
+	{ "backtrace",  "Display stack backtrace", mon_backtrace },
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
 /***** Implementations of basic kernel monitor commands *****/
+
+
+int
+mon_debug(int argc, char **argv, struct Trapframe  *tf)
+{
+	cprintf("My funct works! %x %o\n", 10, 10);
+	return  0;
+}
 
 int
 mon_help(int argc, char **argv, struct Trapframe *tf)
@@ -62,7 +72,36 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
-	// Your code here.
+	typedef union {
+		uintptr_t* addr;
+		uint32_t value;
+	} register_data;
+
+	struct Eipdebuginfo eip_info;
+
+	register_data current_frame = (register_data) read_ebp();
+	cprintf("%s\n", "Stack backtrace:");
+	while(current_frame.value) {
+		cprintf(
+			"  ebp %08x eip %08x args ",
+			current_frame.value,
+			current_frame.addr[1]
+		);
+		for (uint8_t i = 0; i < 5;  i++) {
+			cprintf("%08x ", current_frame.addr[i + 2]);
+		}
+		cprintf("%s", "\n");
+		debuginfo_eip(current_frame.addr[1], &eip_info);
+		cprintf(
+			"\t%s:%d: %.*s+%d\n",
+			eip_info.eip_file,
+			eip_info.eip_line,
+			eip_info.eip_fn_namelen,
+			eip_info.eip_fn_name,
+			current_frame.addr[1] - eip_info.eip_fn_addr
+		);
+		current_frame = (register_data) *current_frame.addr;
+	}
 	return 0;
 }
 
