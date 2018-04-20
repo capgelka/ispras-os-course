@@ -14,6 +14,9 @@
 #include <kern/cpu.h>
 #include <kern/kdebug.h>
 
+#include <kern/kclock.h>
+#include <kern/picirq.h>
+
 struct Env env_array[NENV];
 struct Env *curenv = NULL;
 struct Env *envs = env_array;		// All environments
@@ -491,6 +494,10 @@ csys_exit(void)
 void
 csys_yield(struct Trapframe *tf)
 {
+	int8_t status = rtc_check_status();
+	cprintf("status: %d\n", status);
+	panic("NOOO");
+	pic_send_eoi(8);
 	memcpy(&curenv->env_tf, tf, sizeof(struct Trapframe));
 	sched_yield();
 }

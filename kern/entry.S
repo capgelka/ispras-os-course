@@ -62,6 +62,7 @@ entry:
 	movl	$(bootstacktop),%esp
 
 	# now to C code
+#	sti
 	call	i386_init
 
 	# Should never get here, but in case we do, just spin.
@@ -130,6 +131,7 @@ sys_yield:
 	cli
 	call _generall_syscall
 	call csys_yield
+#	sii
 	jmp .
 
 #LAB 3: Your code here.
@@ -140,6 +142,7 @@ sys_exit:
 	cli
 	call _exit_syscall
 	call csys_exit
+#	sti
 	jmp .
 #endif
 

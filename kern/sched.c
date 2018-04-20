@@ -4,6 +4,9 @@
 #include <kern/monitor.h>
 
 
+#include <kern/kclock.h>
+#include <kern/picirq.h>
+
 struct Taskstate cpu_ts;
 void sched_halt(void);
 
@@ -25,9 +28,14 @@ sched_yield(void)
 	// simply drop through to the code
 	// below to halt the cpu.
 
+	int8_t status = rtc_check_status();
+	cprintf("status: %d\n", status);
+//	panic("NOOO");
+	pic_send_eoi(8);
+
 	//LAB 3: Your code here.
 	//sched_halt();
-	//debug_mem();
+	debug_mem();
 	//show_env(curenv);
 	struct Env* next_env = NULL;
 	int curr = (find_env_num(curenv) + 1) % NENV;
