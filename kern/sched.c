@@ -32,10 +32,11 @@ sched_yield(void)
 	cprintf("status: %d\n", status);
 //	panic("NOOO");
 	pic_send_eoi(8);
+	//pic_send_eoi(status);
 
 	//LAB 3: Your code here.
 	//sched_halt();
-	debug_mem();
+	// debug_mem();
 	//show_env(curenv);
 	struct Env* next_env = NULL;
 	int curr = (find_env_num(curenv) + 1) % NENV;

@@ -351,6 +351,12 @@ bind_functions(struct Env *e, struct Elf *elf)
 			uintptr_t addr = find_function(name);
 
 			if (addr) {
+				// cprintf(
+				// 	"find addr Env: %d \nt %s:\nt %x \n",
+				// 	ENVX(e->env_id),
+				// 	name,
+				// 	addr
+				// );
 				*((int *)sym->st_value) = addr;
 			}
 		}
@@ -422,7 +428,7 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	
 #ifdef CONFIG_KSPACE
 	// Uncomment this for task №5.
-	//bind_functions();
+	bind_functions(e, elf);
 #endif
 }
 
@@ -494,10 +500,10 @@ csys_exit(void)
 void
 csys_yield(struct Trapframe *tf)
 {
-	int8_t status = rtc_check_status();
-	cprintf("status: %d\n", status);
-	panic("NOOO");
-	pic_send_eoi(8);
+	// int8_t status = rtc_check_status();
+	// cprintf("status: %d\n", status);
+	// panic("NOOO");
+	// pic_send_eoi(8);
 	memcpy(&curenv->env_tf, tf, sizeof(struct Trapframe));
 	sched_yield();
 }
@@ -588,7 +594,7 @@ env_run(struct Env *e)
 	curenv = e;
 	curenv->env_status = ENV_RUNNING;
 	curenv->env_runs++;
-	// cprintf("EIP 0x%x\n", curenv->env_tf.tf_eip);
+	cprintf("EIP 0x%x\n", curenv->env_tf.tf_eip);
 	env_pop_tf(&(curenv->env_tf));
 	uint32_t eip;
 	__asm __volatile("movl %%ebp,%0" : "=r" (eip));
