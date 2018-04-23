@@ -37,6 +37,7 @@ test_alloc(uint8_t nbytes)
 
 	nunits = (nbytes + sizeof(Header) - 1) / sizeof(Header) + 1;
 
+	spin_lock(&memlock);
 	if (freep == NULL) { /* no free list yet */
 		((Header *) &space)->s.next = (Header *) &base;
 		((Header *) &space)->s.prev = (Header *) &base;
@@ -46,7 +47,6 @@ test_alloc(uint8_t nbytes)
 
 	check_list();
 
-	spin_lock(&memlock);
 	for(p = freep->s.next; ; p = p->s.next) {
 		if (p->s.size >= nunits) { /* big enough */
 			freep = p->s.prev;
