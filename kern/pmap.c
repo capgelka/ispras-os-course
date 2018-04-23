@@ -12,6 +12,7 @@
 // These variables are set by i386_detect_memory()
 size_t npages;			// Amount of physical memory (in pages)
 static size_t npages_basemem;	// Amount of base memory (in pages)
+#define last_page_addr ((char*) KERNBASE + npages * PGSIZE)
 
 // These variables are set in mem_init()
 pde_t *kern_pgdir;		// Kernel's initial page directory
@@ -96,7 +97,37 @@ boot_alloc(uint32_t n)
 	//
 	// LAB 6: Your code here.
 
-	return NULL;
+	char* addr = nextfree;
+	if (n) {
+		nextfree = ROUNDUP(nextfree + n, PGSIZE);
+		if (nextfree > last_page_addr) {
+			panic(
+				"boot alloc error: not enough memory. Need %d while only %d id available",
+				n,
+				last_page_addr - nextfree - n
+			);
+		}
+	}
+	return addr;
+
+	// cprintf("=================%p\n", nextfree);
+	// result = nextfree;
+	// nextfree = ROUNDUP(nextfree + n, PGSIZE);
+
+	// if ((uint32_t) nextfree - KERNBASE > npages * PGSIZE) {
+	// 	panic("boot_alloc failed: requested %uK, available %uK",
+	// 	      ROUNDUP(n, PGSIZE) / 1024,
+	// 	      (npages * PGSIZE - (uint32_t) result) / 1024);
+	// 	return NULL;
+	// }
+	// cprintf("=================%p\n", result);
+	// return result;
+	// if (n) {
+
+
+	// }
+
+	// return NULL;
 }
 
 // Set up a two-level page table:
@@ -115,7 +146,7 @@ mem_init(void)
 	i386_detect_memory();
 
 	// Remove this line when you're ready to test this function.
-	panic("mem_init: This function is not finished\n");
+	//panic("mem_init: This function is not finished\n");
 
 	//////////////////////////////////////////////////////////////////////
 	// create initial page directory.
