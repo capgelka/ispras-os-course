@@ -596,9 +596,5 @@ env_run(struct Env *e)
 	curenv->env_runs++;
 	cprintf("EIP 0x%x\n", curenv->env_tf.tf_eip);
 	env_pop_tf(&(curenv->env_tf));
-	uint32_t eip;
-	__asm __volatile("movl %%ebp,%0" : "=r" (eip));
-
-	env_pop_tf(&e->env_tf);
 }
 

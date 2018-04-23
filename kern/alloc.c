@@ -11,6 +11,7 @@ static Header base = { .s = { .next = (Header *) space, .prev = (Header *) space
 
 static Header *freep = NULL; /* start of free list */
 
+static struct spinlock memlock;
 
 static void check_list(void)
 {
@@ -45,6 +46,7 @@ test_alloc(uint8_t nbytes)
 
 	check_list();
 
+	spin_lock(&memlock);
 	for(p = freep->s.next; ; p = p->s.next) {
 		if (p->s.size >= nunits) { /* big enough */
 			freep = p->s.prev;
@@ -61,6 +63,7 @@ test_alloc(uint8_t nbytes)
 		if (p == freep) { /* wrapped around free list */
 			return NULL;
 		}
+	spin_unlock(&memlock);
 	}
 }
 
@@ -74,6 +77,7 @@ test_free(void *ap)
 	for (p = freep; !(bp > p && bp < p->s.next); p = p->s.next)
 		if (p >= p->s.next && (bp > p || bp < p->s.next))
 			break; /* freed block at start or end of arena */
+	spin_lock(&memlock);
 	if (bp + bp->s.size == p->s.next && p + p->s.size == bp) { /* join to both */
 		p->s.size += bp->s.size + p->s.next->s.size;
 		p->s.next->s.next->s.prev = p;
@@ -93,7 +97,7 @@ test_free(void *ap)
 		p->s.next = bp;
 	}
 	freep = p;
-
+	spin_unlock(&memlock);
 	check_list();
 }
 

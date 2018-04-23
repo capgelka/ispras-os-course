@@ -39,8 +39,7 @@ sched_yield(void)
 	// debug_mem();
 	//show_env(curenv);
 	struct Env* next_env = NULL;
-	cprintf("@@@@@@@@@@ %p\n", curenv);
-	int curr = (find_env_num(curenv) + 1) % NENV;
+	int curr = (int) (curenv - envs);
 	for (int i = curr; i < NENV; i++) {
 		if (envs[i].env_status == ENV_RUNNABLE) {
 			next_env = &envs[i];
