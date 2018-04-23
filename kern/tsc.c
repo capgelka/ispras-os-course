@@ -10,6 +10,8 @@
 #define DEFAULT_FREQ 2500000
 #define TIMES 100
 
+static uint64_t timer_start_time;
+
 unsigned long cpu_freq;
 /*
  * This reads the current MSB of the PIT counter, and
@@ -193,11 +195,26 @@ void print_timer_error(void)
 //Lab 5: You code here
 //Use print_time function to print timert result.
 //Use print_timer_error function to print error.
+
+int second_from_timer(void)
+{
+	return read_tsc() / cpu_freq / 1000;
+}
+
 void timer_start(void)
 {
+	timer_start_time = second_from_timer();
 }
 
 void timer_stop(void)
 {
+	uint64_t current_time = second_from_timer();
+	if (timer_start_time) {
+		print_time(current_time - timer_start_time);
+		timer_start_time = 0;
+	}
+	else {
+		print_timer_error();
+	}
 }
 

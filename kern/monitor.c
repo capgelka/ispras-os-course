@@ -27,11 +27,28 @@ static struct Command commands[] = {
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
 	{ "debug",  "Display debug string", mon_debug },
 	{ "backtrace",  "Display stack backtrace", mon_backtrace },
+	{ "timer_start",  "Start tcs timer", start_timer },
+	{ "timer_stop",  "Stop tcs timer", stop_timer },
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
 /***** Implementations of basic kernel monitor commands *****/
 
+
+int
+start_timer(int argc, char **argv, struct Trapframe *tf)
+{
+	timer_start();
+	return 0;
+}
+
+
+int
+stop_timer(int argc, char **argv, struct Trapframe *tf)
+{
+	timer_stop();
+	return 0;
+}
 
 int
 mon_debug(int argc, char **argv, struct Trapframe  *tf)
