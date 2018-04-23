@@ -28,10 +28,10 @@ sched_yield(void)
 	// simply drop through to the code
 	// below to halt the cpu.
 
-	int8_t status = rtc_check_status();
-	cprintf("status: %d\n", status);
-//	panic("NOOO");
-	pic_send_eoi(8);
+// 	int8_t status = rtc_check_status();
+// 	cprintf("status: %d\n", status);
+// //	panic("NOOO");
+// 	pic_send_eoi(8);
 	//pic_send_eoi(status);
 
 	//LAB 3: Your code here.
