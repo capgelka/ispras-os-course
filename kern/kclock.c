@@ -2,7 +2,6 @@
 
 #include <inc/x86.h>
 #include <kern/kclock.h>
-#include <inc/stdio.h>
 
 void
 rtc_init(void)
@@ -28,3 +27,18 @@ rtc_check_status(void)
     status = inb(IO_RTC_DATA);
 	return status;
 }
+
+unsigned
+mc146818_read(unsigned reg)
+{
+	outb(IO_RTC_CMND, reg);
+	return inb(IO_RTC_DATA);
+}
+
+void
+mc146818_write(unsigned reg, unsigned datum)
+{
+	outb(IO_RTC_CMND, reg);
+	outb(IO_RTC_DATA, datum);
+}
+
