@@ -254,7 +254,6 @@ int
 env_alloc(struct Env **newenv_store, envid_t parent_id)
 {
 	int32_t generation;
-	int8_t offset_multiplier;
 	struct Env *e;
 
 	if (!(e = env_free_list)) {
@@ -296,6 +295,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	e->env_tf.tf_ss = GD_KD | 0;
 	e->env_tf.tf_cs = GD_KT | 0;
 	//LAB 3: Your code here.
+	int8_t offset_multiplier;
 	offset_multiplier = find_env_number(e);
 	if (e < 0) {
 		panic("can't find environment with addr %p", e);
