@@ -300,7 +300,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	if (e < 0) {
 		panic("can't find environment with addr %p", e);
 	}
-	e->env_tf.tf_esp = 0x210000 - offset_multiplier * 40960;
+	e->env_tf.tf_esp = 0x210000 - offset_multiplier * 4096;
 #else
 #endif
 
