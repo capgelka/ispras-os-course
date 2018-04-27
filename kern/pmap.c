@@ -169,7 +169,8 @@ mem_init(void)
 	// array.  'npages' is the number of physical pages in memory.  Use memset
 	// to initialize all fields of each struct PageInfo to 0.
 	// Your code goes here:
-
+	pages = (struct PageInfo *) boot_alloc(npages * sizeof(struct PageInfo));
+	memset(pages, 0, npages * sizeof(struct PageInfo));
 
 	//////////////////////////////////////////////////////////////////////
 	// Now that we've allocated the initial kernel data structures, we set
@@ -216,7 +217,30 @@ page_init(void)
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
 	size_t i;
+
+	extern char end[];
+	char* start_allocated = ROUNDUP((char *) end, PGSIZE);
+	char* end_allocated = boot_alloc(0);
+
+	size_t used_pages = (end_allocated - start_allocated) / PGSIZE;
+
+	cprintf(
+		"Used: %d| %x   |   \n", used_pages,
+		page2pa(&pages[used_pages])
+	);
+
+	physaddr_t pa_i;
+	char *va;
+
 	for (i = 0; i < npages; i++) {
+		// cprintf("Addr for (%d) page: %p \n", i, &pages[i]);
+		pa = page2pa(&pages[i]);
+		va = page2kva(&pages[i]);
+		if (i == 0 || (IOPHYSMEM <= pa && va < (char *)boot_alloc(0))) {
+			pages[i].pp_ref = 1;
+			pages[i].pp_link = NULL;
+			cprintf("%d\n", i);
+		}
 		pages[i].pp_ref = 0;
 		pages[i].pp_link = page_free_list;
 		page_free_list = &pages[i];
