@@ -218,32 +218,35 @@ page_init(void)
 	// free pages!
 	size_t i;
 
-	extern char end[];
-	char* start_allocated = ROUNDUP((char *) end, PGSIZE);
-	char* end_allocated = boot_alloc(0);
+	// extern char end[];
+	// char* start_allocated = ROUNDUP((char *) end, PGSIZE);
+	// char* end_allocated = boot_alloc(0);
 
-	size_t used_pages = (end_allocated - start_allocated) / PGSIZE;
+	// size_t used_pages = (end_allocated - start_allocated) / PGSIZE;
 
-	cprintf(
-		"Used: %d| %x   |   \n", used_pages,
-		page2pa(&pages[used_pages])
-	);
+	// cprintf(
+	// 	"Used: %d| %x   |   \n", used_pages,
+	// 	page2pa(&pages[used_pages])
+	// );
 
-	physaddr_t pa_i;
-	char *va;
+	physaddr_t phys_addr;
+	char *virt_addr;
 
 	for (i = 0; i < npages; i++) {
 		// cprintf("Addr for (%d) page: %p \n", i, &pages[i]);
-		pa = page2pa(&pages[i]);
-		va = page2kva(&pages[i]);
-		if (i == 0 || (IOPHYSMEM <= pa && va < (char *)boot_alloc(0))) {
+		phys_addr = page2pa(&pages[i]);
+		virt_addr = page2kva(&pages[i]);
+		if (i == 0 ||
+				(IOPHYSMEM <= phys_addr &&
+			 	virt_addr < (char *)boot_alloc(0))
+			) {
+
 			pages[i].pp_ref = 1;
 			pages[i].pp_link = NULL;
-			cprintf("%d\n", i);
-		}
-		pages[i].pp_ref = 0;
-		pages[i].pp_link = page_free_list;
-		page_free_list = &pages[i];
+		} else {
+			pages[i].pp_ref = 0;
+			pages[i].pp_link = page_free_list;
+			page_free_list = &pages[i];
 	}
 }
 
@@ -263,7 +266,16 @@ struct PageInfo *
 page_alloc(int alloc_flags)
 {
 	// Fill this function in
-	return 0;
+//	struct PageInfo* alloc_start = NULL;
+	char* page_addr = page2kva(page_free_list);
+	struct PageInfo* allocated_page_info = page_free_list;
+
+	page_free_list = page_free_list->pp_link;
+
+	if (alloc_flags & ALLOC_ZERO) {
+		memset(page_addr, 0, PGSIZE);
+	}
+	return allocated_page_info;
 }
 
 //
@@ -276,6 +288,15 @@ page_free(struct PageInfo *pp)
 	// Fill this function in
 	// Hint: You may want to panic if pp->pp_ref is nonzero or
 	// pp->pp_link is not NULL.
+	if (pp->pp_ref && pp->pp_link)  {
+		panic(
+			"Can't free page with %d refs and pp_link equal to %x",
+			pp->pp_ref,
+			pp->pp_ref
+		);
+	}
+	pp->pp_link = page_free_list;
+	page_free_list = pp;
 }
 
 //
