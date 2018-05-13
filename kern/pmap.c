@@ -268,13 +268,15 @@ page_alloc(int alloc_flags)
 {
 	// Fill this function in
 //	struct PageInfo* alloc_start = NULL;
-	char* page_addr = page2kva(page_free_list);
-	struct PageInfo* allocated_page_info = page_free_list;
 
-	page_free_list = page_free_list->pp_link;
+	struct PageInfo* allocated_page_info = page_free_list;
+	if (page_free_list) {
+		page_free_list = page_free_list->pp_link;
+		allocated_page_info->pp_link = NULL;
+	}
 
 	if (alloc_flags & ALLOC_ZERO) {
-		memset(page_addr, 0, PGSIZE);
+		memset(page2kva(allocated_page_info), 0, PGSIZE);
 	}
 	return allocated_page_info;
 }
@@ -479,7 +481,6 @@ check_page_free_list(bool only_low_memory)
 	for (pp = page_free_list; pp; pp = pp->pp_link)
 		if (PDX(page2pa(pp)) < pdx_limit)
 			memset(page2kva(pp), 0x97, 128);
-
 	first_free_page = (char *) boot_alloc(0);
 	for (pp = page_free_list; pp; pp = pp->pp_link) {
 		// check that we didn't corrupt the free list itself
@@ -499,7 +500,6 @@ check_page_free_list(bool only_low_memory)
 		else
 			++nfree_extmem;
 	}
-
 	assert(nfree_basemem > 0);
 	assert(nfree_extmem > 0);
 }
@@ -568,7 +568,6 @@ check_page_alloc(void)
 
 	// give free list back
 	page_free_list = fl;
-
 	// free the pages we took
 	page_free(pp0);
 	page_free(pp1);
