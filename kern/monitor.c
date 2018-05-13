@@ -30,11 +30,61 @@ static struct Command commands[] = {
 	{ "backtrace",  "Display stack backtrace", mon_backtrace },
 	{ "timer_start",  "Start tcs timer", start_timer },
 	{ "timer_stop",  "Stop tcs timer", stop_timer },
+	{ "mv", "View physical memory layout", memory_view }
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
 /***** Implementations of basic kernel monitor commands *****/
 
+void
+print_interval(int start, int current, bool allocated)
+{
+	if (start == (current -1)) {
+		cprintf("%d %s\n", current, allocated ? "ALLOCATED": "FREE");
+	} else {
+		cprintf("%d..%d %s\n", start, current, allocated ? "ALLOCATED": "FREE");
+	}
+}
+
+int 
+memory_view(int argc, char **argv, struct Trapframe *tf)
+{
+	size_t i;
+	uint32_t interval_start = 0;
+	bool allocated = 1; // first is always allocated
+	// physaddr_t phys_addr;
+	// char *virt_addr;
+
+	for (i = 0; i < npages; ++i) {
+		// cprintf("Addr for (%d) page: %p \n", i, &pages[i]);
+
+
+		if ((pages[i].pp_ref > 0) ^ allocated) {
+			print_interval(interval_start, i, allocated);
+			interval_start = i + 1;
+			allocated = !allocated;
+		}
+
+		// if (pages[i].pp_ref && !allocated) {
+		// 	// if (interval_start < i) {
+		// 	 	print_interval(interval_start, i, allocated);
+		// 	// }
+		// 	allocated = 1;
+		// 	interval_start = i;
+		// } else if (!pages[i].pp_ref && allocated) {
+		// 	// if (interval_start < i) {
+		// 		print_interval(interval_start, i, allocated);
+		// 	// }
+		// 	allocated = 0;
+		// 	interval_start = i;
+		// }
+		// else if (!((pages[i].pp_ref > 0) ^ allocated)) {
+		// 	print_interval(interval_start, i, allocated);
+		// }
+	}
+	print_interval(interval_start, i, allocated);
+	return 0;
+}
 
 int
 start_timer(int argc, char **argv, struct Trapframe *tf)
