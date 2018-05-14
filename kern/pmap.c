@@ -112,25 +112,6 @@ boot_alloc(uint32_t n)
 		}
 	}
 	return addr;
-
-	// cprintf("=================%p\n", nextfree);
-	// result = nextfree;
-	// nextfree = ROUNDUP(nextfree + n, PGSIZE);
-
-	// if ((uint32_t) nextfree - KERNBASE > npages * PGSIZE) {
-	// 	panic("boot_alloc failed: requested %uK, available %uK",
-	// 	      ROUNDUP(n, PGSIZE) / 1024,
-	// 	      (npages * PGSIZE - (uint32_t) result) / 1024);
-	// 	return NULL;
-	// }
-	// cprintf("=================%p\n", result);
-	// return result;
-	// if (n) {
-
-
-	// }
-
-	// return NULL;
 }
 
 // Set up a two-level page table:
@@ -279,23 +260,10 @@ page_init(void)
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
 	size_t i;
-
-	// extern char end[];
-	// char* start_allocated = ROUNDUP((char *) end, PGSIZE);
-	// char* end_allocated = boot_alloc(0);
-
-	// size_t used_pages = (end_allocated - start_allocated) / PGSIZE;
-
-	// cprintf(
-	// 	"Used: %d| %x   |   \n", used_pages,
-	// 	page2pa(&pages[used_pages])
-	// );
-
 	physaddr_t phys_addr;
 	char *virt_addr;
 
 	for (i = 0; i < npages; i++) {
-		// cprintf("Addr for (%d) page: %p \n", i, &pages[i]);
 		phys_addr = page2pa(&pages[i]);
 		virt_addr = page2kva(&pages[i]);
 		if (i == 0 ||
@@ -329,7 +297,6 @@ struct PageInfo *
 page_alloc(int alloc_flags)
 {
 	// Fill this function in
-//	struct PageInfo* alloc_start = NULL;
 
 	struct PageInfo* allocated_page_info = page_free_list;
 	if (page_free_list) {
