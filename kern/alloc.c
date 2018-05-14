@@ -58,13 +58,15 @@ test_alloc(uint8_t nbytes)
 				p += p->s.size;
 				p->s.size = nunits;
 			}
+			spin_unlock(&memlock);
 			return (void *)(p + 1);
 		}
 		if (p == freep) { /* wrapped around free list */
+			spin_unlock(&memlock);
 			return NULL;
 		}
-	spin_unlock(&memlock);
 	}
+	spin_unlock(&memlock);
 }
 
 /* free: put block ap in free list */
@@ -73,11 +75,11 @@ test_free(void *ap)
 {
 	Header *bp, *p;
 	bp = (Header *) ap - 1; /* point to block header */
-
+	spin_lock(&memlock);
 	for (p = freep; !(bp > p && bp < p->s.next); p = p->s.next)
 		if (p >= p->s.next && (bp > p || bp < p->s.next))
 			break; /* freed block at start or end of arena */
-	spin_lock(&memlock);
+
 	if (bp + bp->s.size == p->s.next && p + p->s.size == bp) { /* join to both */
 		p->s.size += bp->s.size + p->s.next->s.size;
 		p->s.next->s.next->s.prev = p;
