@@ -327,6 +327,9 @@ page_alloc(int alloc_flags)
 	// Fill this function in
 
 	struct PageInfo* allocated_page_info = page_free_list;
+	if (allocated_page_info == NULL) {
+		return NULL;
+	}
 	if (page_free_list) {
 		page_free_list = page_free_list->pp_link;
 		allocated_page_info->pp_link = NULL;
@@ -400,23 +403,33 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 	// pde_t curr_pde = pgdir[PDX(va)];
 	// pte_t curr_pte = curr_pde[PTX(va)];
 
-	cprintf("call pgdir_walk with %p, %p, %d\n",
-		pgdir,
-		va,
-		create
-	);
+	// cprintf("===call pgdir_walk with \npgdir: %p\nva: %p\nflag: %d\n\n",
+	// 	pgdir,
+	// 	va,
+	// 	create
+	// );
 	pte_t *pte = (pte_t *)PTE_ADDR(pgdir[PDX(va)]);
 	pte_t *pte_result = &pte[PTX(va)];
+
 	struct PageInfo *page;
 	if (!pte || !pte_result) {
+		cprintf("GOT NULL!\n");
 		physaddr_t pa;
-		if (create == false) return NULL;
-		if (!(page = page_alloc(ALLOC_ZERO))) return NULL;
+		if (create == false) {
+			return NULL;
+		}
+		if (!(page = page_alloc(ALLOC_ZERO))) {
+			return NULL;
+		}
 		pa = page2pa(page);
 		pgdir[PDX(va)] = pa | PTE_P | PTE_W | PTE_U;
 		page->pp_ref++;
 		return (pte_t *)KADDR(pa) + PTX(va);
 	}
+	// cprintf("FIRST\n");
+	// cprintf("!!!pte: addr: %p\n", pte);
+	// cprintf("SECOND!!!!\n");
+	//cprintf("pte: addr: %x value: %x \n", (uint32_t) pte, *pte);
 	return KADDR((physaddr_t)pte_result);
 	return NULL;
 }
@@ -437,6 +450,7 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 {
 	// Fill this function in
 	size_t i;
+	cprintf("BOOT MAPR REGION\n");
 	for (i = 0; i < size; i += PGSIZE) {
 		pte_t* pte_p = pgdir_walk(pgdir, (void* ) va + i, 1);
 		*pte_p = (pa + i) | perm | PTE_P;
@@ -482,7 +496,7 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 		page_remove(pgdir, va);
 	}
 	*pte_p = page2pa(pp) | perm | PTE_P;
-	//pgdir[PDX(va)] = PTE_ADDR(pgdir[PDX(va)]) | perm | PTE_P;
+	pgdir[PDX(va)] = PTE_ADDR(pgdir[PDX(va)]) | perm | PTE_P;
 
 	return 0;
 }
@@ -722,9 +736,14 @@ check_kern_pgdir(void)
 	for (i = 0; i < npages * PGSIZE; i += PGSIZE)
 		assert(check_va2pa(pgdir, KERNBASE + i) == i);
 
-	// check kernel stack
-	for (i = 0; i < KSTKSIZE; i += PGSIZE)
-		assert(check_va2pa(pgdir, KSTACKTOP - KSTKSIZE + i) == PADDR(bootstack) + i);
+	check kernel stack
+	for (i = 0; i < KSTKSIZE; i += PGSIZE) {
+		cprintf("%d\n", check_va2pa(pgdir, KSTACKTOP - KSTKSIZE + i));
+		assert(
+			check_va2pa(pgdir, KSTACKTOP - KSTKSIZE + i) == 
+			PADDR(bootstack) + i
+		);
+	}
 	assert(check_va2pa(pgdir, KSTACKTOP - PTSIZE) == ~0);
 
 	// check PDE permissions
@@ -758,11 +777,22 @@ check_va2pa(pde_t *pgdir, uintptr_t va)
 	pte_t *p;
 
 	pgdir = &pgdir[PDX(va)];
-	if (!(*pgdir & PTE_P))
+	if (!(*pgdir & PTE_P)) {
+		cprintf("first check_va2pa failed\n");
+		cprintf(
+			"pgdir: 0x%x va: 0x%x PTE_P: 0x%x\n",
+			*pgdir,
+			va,
+			PTE_P
+		);
 		return ~0;
+	}
 	p = (pte_t*) KADDR(PTE_ADDR(*pgdir));
-	if (!(p[PTX(va)] & PTE_P))
+	if (!(p[PTX(va)] & PTE_P)) {
+		cprintf("second check_va2pa failed\n");
 		return ~0;
+	}
+	cprintf("check 1 2 ok for check_va2pa\n");
 	return PTE_ADDR(p[PTX(va)]);
 }
 
@@ -798,8 +828,9 @@ check_page(void)
 	assert(page_lookup(kern_pgdir, (void *) 0x0, &ptep) == NULL);
 
 	// there is no free memory, so we can't allocate a page table
+	cprintf("BEFORE_TEST");
 	assert(page_insert(kern_pgdir, pp1, 0x0, PTE_W) < 0);
-
+	cprintf("AFTER_TEST");
 	// free pp0 and try again: pp0 should be used for page table
 	page_free(pp0);
 	assert(page_insert(kern_pgdir, pp1, 0x0, PTE_W) == 0);

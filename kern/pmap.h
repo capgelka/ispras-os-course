@@ -39,8 +39,17 @@ _paddr(const char *file, int line, void *kva)
 static inline void*
 _kaddr(const char *file, int line, physaddr_t pa)
 {
-	if (PGNUM(pa) >= npages)
-		_panic(file, line, "KADDR called with invalid pa %p", (void *) pa);
+	if (PGNUM(pa) >= npages) {
+		_panic(
+			file,
+			line, 
+			"KADDR called with invalid pa %p - page number"\
+			" is %d while only %d pages available\n",
+			(void *) pa,
+			PGNUM(pa),
+			npages
+		);
+	}
 	return (void *)(pa + KERNBASE);
 }
 
