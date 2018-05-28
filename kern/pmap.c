@@ -178,14 +178,29 @@ mem_init(void)
 	//      (ie. perm = PTE_U | PTE_P)
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
-size_t psize = sizeof(struct PageInfo);
-boot_map_region(kern_pgdir, UPAGES + psize, ROUNDUP((npages - 1) * psize, PGSIZE), PADDR(pages + psize), PTE_U | PTE_P);
+	size_t psize = sizeof(struct PageInfo);
+	boot_map_region(
+		kern_pgdir,
+		UPAGES + psize,
+		ROUNDUP((npages - 1) * psize, PGSIZE),
+		PADDR(pages + psize),
+		PTE_U | PTE_P
+	);
+	boot_map_region(
+		kern_pgdir,
+		UPAGES,
+		ROUNDUP(sizeof(struct PageInfo), PGSIZE),
+		PADDR(pages),
+		PTE_W | PTE_P
+	);
+
+
 	// boot_map_region(
 	// 	kern_pgdir,
-	// 	UPAGES,
-	// 	ROUNDUP(sizeof(struct PageInfo), PGSIZE),
-	// 	PADDR(pages),
-	// 	PTE_W | PTE_P
+	// 	UENVS,
+	// 	ROUNDUP(NENV * sizeof(struct Env), PGSIZE),
+	// 	PADDR(envs),
+	// 	PTE_U | PTE_P
 	// );
 
 	//////////////////////////////////////////////////////////////////////
@@ -215,6 +230,14 @@ boot_map_region(kern_pgdir, UPAGES + psize, ROUNDUP((npages - 1) * psize, PGSIZE
 	// we just set up the mapping anyway.
 	// Permissions: kernel RW, user NONE
 	// Your code goes here:
+	boot_map_region(
+		kern_pgdir,
+		KSTACKTOP-KSTKSIZE,
+		ROUNDUP(KSTKSIZE, PGSIZE),
+		PADDR(bootstack),
+		PTE_W | PTE_P
+	);
+	
 	boot_map_region(
 		kern_pgdir,
 		KERNBASE,
@@ -731,7 +754,7 @@ check_kern_pgdir(void)
 	for (i = 0; i < npages * PGSIZE; i += PGSIZE)
 		assert(check_va2pa(pgdir, KERNBASE + i) == i);
 
-	check kernel stack
+	//check kernel stack
 	for (i = 0; i < KSTKSIZE; i += PGSIZE) {
 		cprintf("%d\n", check_va2pa(pgdir, KSTACKTOP - KSTKSIZE + i));
 		assert(
