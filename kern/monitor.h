@@ -19,5 +19,6 @@ int mon_debug(int argc, char **argv, struct Trapframe *tf);
 int start_timer(int argc, char **argv, struct Trapframe *tf);
 int stop_timer(int argc, char **argv, struct Trapframe *tf);
 int memory_view(int argc, char **argv, struct Trapframe *tf);
+int print_constants(int argc, char **argv, struct Trapframe *tf);
 
 #endif	// !JOS_KERN_MONITOR_H

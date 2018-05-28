@@ -30,11 +30,19 @@ static struct Command commands[] = {
 	{ "backtrace",  "Display stack backtrace", mon_backtrace },
 	{ "timer_start",  "Start tcs timer", start_timer },
 	{ "timer_stop",  "Stop tcs timer", stop_timer },
-	{ "mv", "View physical memory layout", memory_view }
+	{ "mv", "View physical memory layout", memory_view },
+	{ "pc", "Print constants", print_constants }
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
 /***** Implementations of basic kernel monitor commands *****/
+
+int
+print_constants(int argc, char **argv, struct Trapframe *tf)
+{
+	cprintf("\n"); 
+	return 0;
+}
 
 void
 print_interval(int start, int current, bool allocated)

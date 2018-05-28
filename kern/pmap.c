@@ -431,7 +431,7 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 
 	struct PageInfo *page;
 	if (!pte || !pte_result) {
-		cprintf("GOT NULL!\n");
+
 		physaddr_t pa;
 		if (create == false) {
 			return NULL;
@@ -796,21 +796,21 @@ check_va2pa(pde_t *pgdir, uintptr_t va)
 
 	pgdir = &pgdir[PDX(va)];
 	if (!(*pgdir & PTE_P)) {
-		cprintf("first check_va2pa failed\n");
-		cprintf(
-			"pgdir: 0x%x va: 0x%x PTE_P: 0x%x\n",
-			*pgdir,
-			va,
-			PTE_P
-		);
+		// cprintf("first check_va2pa failed\n");
+		// cprintf(
+		// 	"pgdir: 0x%x va: 0x%x PTE_P: 0x%x\n",
+		// 	*pgdir,
+		// 	va,
+		// 	PTE_P
+		// );
 		return ~0;
 	}
 	p = (pte_t*) KADDR(PTE_ADDR(*pgdir));
 	if (!(p[PTX(va)] & PTE_P)) {
-		cprintf("second check_va2pa failed\n");
+		// cprintf("second check_va2pa failed\n");
 		return ~0;
 	}
-	cprintf("check 1 2 ok for check_va2pa\n");
+	// cprintf("check 1 2 ok for check_va2pa\n");
 	return PTE_ADDR(p[PTX(va)]);
 }
 
