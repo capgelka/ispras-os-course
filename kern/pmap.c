@@ -465,7 +465,7 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 	// cprintf("SECOND!!!!\n");
 	//cprintf("pte: addr: %x value: %x \n", (uint32_t) pte, *pte);
 	return KADDR((physaddr_t)pte_result);
-	return NULL;
+	// return NULL;
 }
 
 //
@@ -524,7 +524,7 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 	if (!pte_p) {
 		return -E_NO_MEM;
 	}
-	tlb_invalidate(pgdir, va);
+	// tlb_invalidate(pgdir, va);
 	pp->pp_ref++;
 	if (*pte_p) {
 		page_remove(pgdir, va);

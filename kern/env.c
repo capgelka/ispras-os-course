@@ -26,11 +26,74 @@ struct Env *curenv = NULL;		// The current env
 static struct Env *env_free_list;	// Free environment list
 					// (linked by Env->env_link)
 
-static uint32_t entry_points[NENV];
+//static uint32_t entry_points[NENV];
 
 #define ENVGENSHIFT	12		// >= LOGNENV
 
-//extern unsigned int bootstacktop;
+
+// int find_env_num(struct Env* env) {
+// 	for (int i = 0; i<NENV; i++) {
+// 		if (&env_array[i] == env) {
+// 			return i;
+// 		}
+
+// 	}
+// 	return -1;
+// }
+
+
+void show_env (struct Env* env) {
+
+	char* val;
+	switch(env->env_status) {
+
+	case ENV_FREE:
+		val = "FREE";
+		break;
+	case ENV_RUNNABLE:
+		val = "RUNNABLE";
+		break;
+	case ENV_RUNNING:
+		val = "RUNNING";
+		break;
+	default:
+		val = "OTHER";
+	}
+
+
+	cprintf("Addr: %p\nNext: %p\nStatus: %s (%d)\n\n",
+		env, env->env_link, val, env->env_status);
+}
+
+	
+
+
+// void
+// debug_mem () {
+// 	cprintf("=============================== \n");
+// 	cprintf("Arr Size %d\n", NENV);
+// 	struct Env* env_arr_start = env_array;
+// 	struct Env* ep = env_arr_start;
+// 	cprintf("Debug envs \n");
+// 	do  {	
+// 		show_env(ep);
+// 		ep++;
+		
+// 	}  while (ep != &envs[NENV-1]);
+// 	cprintf("-------------------------\n");
+// 	cprintf("Debug free\n");
+// 	ep = env_free_list;
+//        	do  {
+		
+// 		show_env(ep);
+// 		ep = ep->env_link;
+		
+// 	} while (ep != env_arr_start && ep != NULL);
+// 	cprintf("=============================== \n\n\n");
+	
+// }
+
+// extern unsigned int bootstacktop;
 
 // Global descriptor table.
 //
@@ -208,6 +271,12 @@ env_setup_vm(struct Env *e)
 	//    - The functions in kern/pmap.h are handy.
 
 	// LAB 8: Your code here.
+	e->env_pgdir = page2kva(p);
+	// uint32_t utop_border = PDX(UTOP);
+	// for (int i = 0; i != utop_border; i++) {
+	// 	e->env_pgdir[i] = 0;
+	// }
+	p->pp_ref++;
 
 	// UVPT maps the env's own page table read-only.
 	// Permissions: kernel R, user R
@@ -436,8 +505,6 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 
 	e->env_tf.tf_eip = elf->e_entry;
 
-	entry_points[find_env_num(e)] = elf->e_entry;
-
 
 	
 #ifdef CONFIG_KSPACE
@@ -650,7 +717,13 @@ env_run(struct Env *e)
 	//
 	//LAB 3: Your code here.
 
-
-	env_pop_tf(&e->env_tf);
+	if (curenv && curenv->env_status == ENV_RUNNING) {
+		curenv->env_status = ENV_RUNNABLE;
+	}
+	curenv = e;
+	curenv->env_status = ENV_RUNNING;
+	curenv->env_runs++;
+	cprintf("EIP 0x%x\n", curenv->env_tf.tf_eip);
+	env_pop_tf(&(e->env_tf));
 }
 
