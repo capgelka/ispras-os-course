@@ -167,6 +167,9 @@ mem_init(void)
 	check_page_free_list(1);
 	check_page_alloc();
 	check_page();
+	cprintf("UPAGES 0x%x\n", (unsigned int) UPAGES);
+	cprintf("UTEMP 0x%x\n", (unsigned int) UTEMP);
+	cprintf("USTACKTOP 0x%x\n", (unsigned int) USTACKTOP);
 
 	//////////////////////////////////////////////////////////////////////
 	// Now we set up virtual memory
@@ -846,9 +849,9 @@ check_page(void)
 	assert(page_lookup(kern_pgdir, (void *) 0x0, &ptep) == NULL);
 
 	// there is no free memory, so we can't allocate a page table
-	cprintf("BEFORE_TEST");
+	
 	assert(page_insert(kern_pgdir, pp1, 0x0, PTE_W) < 0);
-	cprintf("AFTER_TEST");
+	
 	// free pp0 and try again: pp0 should be used for page table
 	page_free(pp0);
 	assert(page_insert(kern_pgdir, pp1, 0x0, PTE_W) == 0);
