@@ -6,7 +6,7 @@
 // makes some difference on real hardware,
 // but it makes an even bigger difference on bochs.
 // Primespipe runs 3x faster this way.
-#define ASM 1
+#define ASM 0
 
 int
 strlen(const char *s)
@@ -187,7 +187,6 @@ memmove(void *dst, const void *src, size_t n)
 {
 	const char *s;
 	char *d;
-
 	s = src;
 	d = dst;
 	if (s < d && s + n > d) {
@@ -205,7 +204,7 @@ memmove(void *dst, const void *src, size_t n)
 
 void *
 memcpy(void *dst, const void *src, size_t n)
-{
+{	
 	return memmove(dst, src, n);
 }
 

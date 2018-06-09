@@ -272,10 +272,12 @@ env_setup_vm(struct Env *e)
 
 	// LAB 8: Your code here.
 	e->env_pgdir = page2kva(p);
-	uint32_t utop_border = PDX(UTOP);
-	for (int i = 0; i != utop_border; i++) {
-		e->env_pgdir[i] = 0;
-	}
+	// uint32_t utop_border = PDX(UTOP);
+	// for (int i = 0; i != utop_border; i++) {
+	// 	e->env_pgdir[i] = 0;
+	// }
+	memcpy(e->env_pgdir+PDX(UTOP),
+		kern_pgdir+PDX(UTOP), PGSIZE - PDX(UTOP) * sizeof (pde_t));
 	p->pp_ref++;
 
 	// UVPT maps the env's own page table read-only.
@@ -344,7 +346,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	e->env_tf.tf_ss = GD_KD | 0;
 	e->env_tf.tf_cs = GD_KT | 0;
 	//LAB 3: Your code here.
-	e->env_tf.tf_esp = KSTACKTOP;
+	// e->env_tf.tf_esp = KSTACKTOP;
 #else
 	e->env_tf.tf_ds = GD_UD | 3;
 	e->env_tf.tf_es = GD_UD | 3;
@@ -386,8 +388,13 @@ region_alloc(struct Env *e, void *va, size_t len)
 	uintptr_t start = ROUNDDOWN((uintptr_t) va, PGSIZE);
 	uintptr_t end = ROUNDUP((uintptr_t) va + len, PGSIZE);
 	// above UTOP is kernel part
-	if (end <= UTOP) {
-		panic("region_alloc error: cant't allocate 0x%x addr is for kernel memory", end);
+	cprintf("region alloc call: %p %d\n", va, len);
+
+	if (end > UTOP) {
+		panic(
+			"region_alloc]:\n can't allocate 0x%x addr is for kernel memory",
+			 end
+		);
 	}
 
 	for (int i = start; i < end; i += PGSIZE) {
@@ -403,6 +410,12 @@ region_alloc(struct Env *e, void *va, size_t len)
 			return;
 		}
 	}
+	// size_t size = ROUNDUP(va + len, PGSIZE) - ROUNDDOWN(va, PGSIZE);
+	// int i;
+	// for (i = 0; i < size; i += PGSIZE) {
+	// 	struct PageInfo *page = page_alloc(0);
+	// 	page_insert(e->env_pgdir, page, va + i, PTE_P | PTE_W | PTE_U);
+	// }	
 }
 
 #ifdef CONFIG_KSPACE
@@ -530,6 +543,8 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	struct Elf* elf = (struct Elf *) binary;
 	struct Proghdr *ph, *eph;
 
+	// lcr3(PADDR(e->env_pgdir));
+
 	ph = (struct Proghdr *) ((uint8_t *) elf + elf->e_phoff);
 	eph = ph + (elf->e_phnum * elf->e_phentsize);
 	cprintf(
@@ -537,16 +552,30 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 		(void*) e->env_pgdir,
 		(void*) PADDR(e->env_pgdir)
 	);
-	lcr3(PADDR(e->env_pgdir));
+
 	for (; ph < eph; ph++)
 		if (ph->p_type == ELF_PROG_LOAD) {
+			cprintf("%p !!!!!\n", (void *) ph->p_va);
+			cprintf("%d !!!!!\n", ph->p_memsz);
 			region_alloc(e, (void *)ph->p_va, ph->p_memsz);
-			memset((void *) ph->p_va, 0, ph->p_memsz);
+			cprintf("fail(\n");
+
+			cprintf("@@@@@\n");
+			cprintf("%p !!!!!\n", (void *) ph->p_va);
+			cprintf("%p !!!!!\n", binary + ph->p_offset);
+			cprintf("%x !!!!!\n", ph->p_filesz);
 			memcpy((void *) ph->p_va, binary + ph->p_offset, ph->p_filesz);
+			cprintf("MEMSET OK");
+			memset(
+				(void*)(ph->p_va + ph->p_filesz),
+				0,
+				ph->p_memsz - ph->p_filesz
+			);
+			//memcpy((void *) ph->p_va, binary + ph->p_offset, ph->p_filesz);
 		}
 	cprintf("OOOOOOOOOO\n");
-	region_alloc(e, (void *)(USTACKTOP - PGSIZE), PGSIZE);
 	lcr3(PADDR(kern_pgdir));
+	// lcr3(PADDR(e->env_pgdir));
 	e->env_tf.tf_eip = elf->e_entry;
 
 
@@ -558,6 +587,7 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	// Now map one page for the program's initial stack
 	// at virtual address USTACKTOP - PGSIZE.
 	// LAB 8: Your code here.
+	region_alloc(e, (void *)(USTACKTOP - PGSIZE), PGSIZE);
 }
 
 //

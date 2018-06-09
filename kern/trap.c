@@ -227,6 +227,12 @@ trap_dispatch(struct Trapframe *tf)
 	// The hardware sometimes raises these because of noise on the
 	// IRQ line or other reasons. We don't care.
 	//
+	if (tf->tf_trapno == T_PGFLT) {
+		cprintf("Page fault interrupt\n");
+		page_fault_handler(tf);
+		return;
+	}
+
 	if (tf->tf_trapno == IRQ_OFFSET + IRQ_SPURIOUS) {
 		cprintf("Spurious interrupt on irq 7\n");
 		print_trapframe(tf);
@@ -313,6 +319,13 @@ page_fault_handler(struct Trapframe *tf)
 	// Handle kernel-mode page faults.
 
 	// LAB 8: Your code here.
+	if (tf->tf_cs == GD_KT) {
+		panic(
+			"[0x%08x] page fault in kernel, fault va: 0x%08x",
+			tf->tf_eip,
+			fault_va
+		);
+	}
 
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.
