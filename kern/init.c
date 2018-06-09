@@ -54,6 +54,7 @@ i386_init(void)
 
 #ifdef CONFIG_KSPACE
 	// Touch all you want.
+	cprintf("start crating envs\n");
 	ENV_CREATE_KERNEL_TYPE(prog_test1);
 	ENV_CREATE_KERNEL_TYPE(prog_test2);
 	ENV_CREATE_KERNEL_TYPE(prog_test3);
@@ -71,6 +72,7 @@ i386_init(void)
 #endif
 
 	// Schedule and run the first user environment!
+	cprintf("run scheduler");
 	sched_yield();
 }
 

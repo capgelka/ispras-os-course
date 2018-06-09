@@ -160,6 +160,8 @@ mem_init(void)
 	//////////////////////////////////////////////////////////////////////
 	// Make 'envs' point to an array of size 'NENV' of 'struct Env'.
 	// LAB 8: Your code here.
+	envs = (struct Env *) boot_alloc(ROUNDUP(NENV * sizeof(struct Env), PGSIZE));
+	memset(envs, 0, ROUNDUP(NENV * sizeof(struct Env), PGSIZE));
 
 	//////////////////////////////////////////////////////////////////////
 	// Now that we've allocated the initial kernel data structures, we set
@@ -202,15 +204,6 @@ mem_init(void)
 		PTE_W | PTE_P
 	);
 
-
-	// boot_map_region(
-	// 	kern_pgdir,
-	// 	UENVS,
-	// 	ROUNDUP(NENV * sizeof(struct Env), PGSIZE),
-	// 	PADDR(envs),
-	// 	PTE_U | PTE_P
-	// );
-
 	//////////////////////////////////////////////////////////////////////
 	// Map the 'envs' array read-only by the user at linear address UENVS
 	// (ie. perm = PTE_U | PTE_P).
@@ -218,7 +211,13 @@ mem_init(void)
 	//    - the new image at UENVS  -- kernel R, user R
 	//    - envs itself -- kernel RW, user NONE
 	// LAB 8: Your code here.
-
+	boot_map_region(
+		kern_pgdir,
+		UENVS,
+		ROUNDUP(NENV * sizeof(struct Env), PGSIZE),
+		PADDR(envs),
+		PTE_U | PTE_P
+	);
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
 	// stack.  The kernel stack grows down from virtual address KSTACKTOP.
@@ -263,6 +262,8 @@ mem_init(void)
 	);
 
 	// Check that the initial page directory has been set up correctly.
+	cprintf("Boot all regions correctly\n");
+	cprintf("kern_pgdir: 0x%p\n", (void*)kern_pgdir);
 	check_kern_pgdir();
 
 	// Switch from the minimal entry page directory to the full kern_pgdir
@@ -272,6 +273,7 @@ mem_init(void)
 	//
 	// If the machine reboots at this point, you've probably set up your
 	// kern_pgdir wrong.
+	cprintf("kern_pgdir: 0x%p\n", (void*)kern_pgdir);
 	lcr3(PADDR(kern_pgdir));
 
 	check_page_free_list(0);
@@ -809,16 +811,13 @@ check_kern_pgdir(void)
 	n = ROUNDUP(npages*sizeof(struct PageInfo), PGSIZE);
 	for (i = 0; i < n; i += PGSIZE)
 		assert(check_va2pa(pgdir, UPAGES + i) == PADDR(pages) + i);
-
 	// check envs array (new test for lab 8)
 	n = ROUNDUP(NENV*sizeof(struct Env), PGSIZE);
 	for (i = 0; i < n; i += PGSIZE)
-		assert(check_va2pa(pgdir, UENVS + i) == PADDR(envs) + i);
-
+		assert(check_va2pa(pgdir, UENVS + i) == (PADDR(envs) + i));
 	// check phys mem
 	for (i = 0; i < npages * PGSIZE; i += PGSIZE)
 		assert(check_va2pa(pgdir, KERNBASE + i) == i);
-
 	//check kernel stack
 	for (i = 0; i < KSTKSIZE; i += PGSIZE) {
 		cprintf("%d\n", check_va2pa(pgdir, KSTACKTOP - KSTKSIZE + i));
@@ -828,7 +827,6 @@ check_kern_pgdir(void)
 		);
 	}
 	assert(check_va2pa(pgdir, KSTACKTOP - PTSIZE) == ~0);
-
 	// check PDE permissions
 	for (i = 0; i < NPDENTRIES; i++) {
 		switch (i) {

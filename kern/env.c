@@ -272,10 +272,10 @@ env_setup_vm(struct Env *e)
 
 	// LAB 8: Your code here.
 	e->env_pgdir = page2kva(p);
-	// uint32_t utop_border = PDX(UTOP);
-	// for (int i = 0; i != utop_border; i++) {
-	// 	e->env_pgdir[i] = 0;
-	// }
+	uint32_t utop_border = PDX(UTOP);
+	for (int i = 0; i != utop_border; i++) {
+		e->env_pgdir[i] = 0;
+	}
 	p->pp_ref++;
 
 	// UVPT maps the env's own page table read-only.
@@ -344,12 +344,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	e->env_tf.tf_ss = GD_KD | 0;
 	e->env_tf.tf_cs = GD_KT | 0;
 	//LAB 3: Your code here.
-	int8_t offset_multiplier;
-	offset_multiplier = find_env_number(e);
-	if (e < 0) {
-		panic("can't find environment with addr %p", e);
-	}
-	e->env_tf.tf_esp = 0x210000 - offset_multiplier * 4096;
+	e->env_tf.tf_esp = KSTACKTOP;
 #else
 	e->env_tf.tf_ds = GD_UD | 3;
 	e->env_tf.tf_es = GD_UD | 3;
@@ -367,7 +362,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	*newenv_store = e;
 
 	cprintf("[%08x] new env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
-	return 0;
+	return 0;	
 }
 
 //
@@ -387,6 +382,27 @@ region_alloc(struct Env *e, void *va, size_t len)
 	//   'va' and 'len' values that are not page-aligned.
 	//   You should round va down, and round (va + len) up.
 	//   (Watch out for corner-cases!)
+
+	uintptr_t start = ROUNDDOWN((uintptr_t) va, PGSIZE);
+	uintptr_t end = ROUNDUP((uintptr_t) va + len, PGSIZE);
+	// above UTOP is kernel part
+	if (end <= UTOP) {
+		panic("region_alloc error: cant't allocate 0x%x addr is for kernel memory", end);
+	}
+
+	for (int i = start; i < end; i += PGSIZE) {
+		struct PageInfo* pi = page_alloc(0);
+		if (pi == NULL) {
+			panic("region_alloc error: page_alloc failed");
+			return;
+		}
+
+		int rc = page_insert(e->env_pgdir, pi, (void *) start, PTE_U | PTE_W | PTE_P);
+		if (rc) {
+			panic("region_alloc eror: %i", rc);
+			return;
+		}
+	}
 }
 
 #ifdef CONFIG_KSPACE
@@ -491,18 +507,46 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 
 	//LAB 3: Your code here.
 
+// 	^C
+// Program received signal SIGINT, Interrupt.
+// => 0xf0102ec2 <env_create+175>:	Error while running hook_stop:
+// Cannot access memory at address 0xf0102ec2
+// 0xf0102ec2 in env_create (binary=<error reading variable: Cannot access memory at address 0xf011afb4>, size=<error reading variable: Cannot access memory at address 0xf011afb8>, type=<error reading variable: Cannot access memory at address 0xf011afbc>) at ./inc/x86.h:195
+// 195		__asm __volatile("movl %0,%%cr3" : : "r" (val));
+// Cannot write the dashboard
+// Traceback (most recent call last):
+//   File "<string>", line 849, in lines
+//   File "<string>", line 128, in run
+// gdb.MemoryError: Cannot access memory at address 0xf0102e13
+
+// During handling of the above exception, another exception occurred:
+
+// Traceback (most recent call last):
+//   File "<string>", line 353, in render
+//   File "<string>", line 867, in lines
+// gdb.MemoryError: Cannot access memory at address 0xf0102ec2
+
+
 	struct Elf* elf = (struct Elf *) binary;
 	struct Proghdr *ph, *eph;
 
 	ph = (struct Proghdr *) ((uint8_t *) elf + elf->e_phoff);
 	eph = ph + (elf->e_phnum * elf->e_phentsize);
-
+	cprintf(
+		"PAGE DIR addr: %p %p\n",
+		(void*) e->env_pgdir,
+		(void*) PADDR(e->env_pgdir)
+	);
+	lcr3(PADDR(e->env_pgdir));
 	for (; ph < eph; ph++)
 		if (ph->p_type == ELF_PROG_LOAD) {
+			region_alloc(e, (void *)ph->p_va, ph->p_memsz);
 			memset((void *) ph->p_va, 0, ph->p_memsz);
 			memcpy((void *) ph->p_va, binary + ph->p_offset, ph->p_filesz);
 		}
-
+	cprintf("OOOOOOOOOO\n");
+	region_alloc(e, (void *)(USTACKTOP - PGSIZE), PGSIZE);
+	lcr3(PADDR(kern_pgdir));
 	e->env_tf.tf_eip = elf->e_entry;
 
 
@@ -723,7 +767,7 @@ env_run(struct Env *e)
 	curenv = e;
 	curenv->env_status = ENV_RUNNING;
 	curenv->env_runs++;
-	cprintf("EIP 0x%x\n", curenv->env_tf.tf_eip);
+	lcr3(PADDR(e->env_pgdir));
 	env_pop_tf(&(e->env_tf));
 }
 
