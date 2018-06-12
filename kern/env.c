@@ -399,32 +399,19 @@ region_alloc(struct Env *e, void *va, size_t len)
 
 	for (int i = start; i < end; i += PGSIZE) {
 		struct PageInfo* pi = page_alloc(0);
-		pte_t* pte = pgdir_walk(e->env_pgdir, (void*)i, 1);
-	    if (!pi || !pte) {
-	      int r = -E_NO_MEM;
-	      panic("region_alloc: %d ", r);
-	    }
-	    assert(*pte == 0);
-		*pte = page2pa(pi) | PTE_U | PTE_P | PTE_W;
-		// if (pi == NULL) {
-		// 	panic("region_alloc error: page_alloc failed");
-		// 	return;
-		// }
 
-		// int rc = page_insert(e->env_pgdir, pi, (void *) i, PTE_U | PTE_W | PTE_P);
-		// if (rc) {
-		// 	panic("region_alloc eror: %i", rc);
-		// 	return;
-		// }
+		if (pi == NULL) {
+			panic("region_alloc error: page_alloc failed");
+			return;
+		}
+
+		int rc = page_insert(e->env_pgdir, pi, (void *) i, PTE_U | PTE_W | PTE_P);
+		if (rc) {
+			panic("region_alloc eror: %i", rc);
+			return;
+		}
 		cprintf("allocated page: %p %p\n", (void*) page2pa(pi), (void*) page2kva(pi));
-		//*(int*) i = 15;
 	}
-	// size_t size = ROUNDUP(va + len, PGSIZE) - ROUNDDOWN(va, PGSIZE);
-	// int i;
-	// for (i = 0; i < size; i += PGSIZE) {
-	// 	struct PageInfo *page = page_alloc(0);
-	// 	page_insert(e->env_pgdir, page, va + i, PTE_P | PTE_W | PTE_U);
-	// }	
 }
 
 #ifdef CONFIG_KSPACE
