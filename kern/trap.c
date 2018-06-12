@@ -239,10 +239,27 @@ trap_dispatch(struct Trapframe *tf)
 		return;
 	}
 
+	if (tf->tf_trapno == T_BRKPT) {
+		monitor(tf);
+		return;
+	}
+
 	if (tf->tf_trapno == IRQ_OFFSET + IRQ_CLOCK) {
 		rtc_check_status();
 		pic_send_eoi(IRQ_CLOCK);
 		sched_yield();
+		return;
+	}
+
+	if (tf->tf_trapno == T_SYSCALL) {
+		tf->tf_regs.reg_eax = syscall(
+			tf->tf_regs.reg_eax,
+			tf->tf_regs.reg_edx,
+			tf->tf_regs.reg_ecx,
+			tf->tf_regs.reg_ebx,
+			tf->tf_regs.reg_edi,
+			tf->tf_regs.reg_esi
+		);
 		return;
 	}
 
@@ -275,6 +292,7 @@ trap(struct Trapframe *tf)
 		cprintf("Incoming TRAP frame at %p\n", tf);
 	}
 
+	cprintf("%d\n", curenv==0);
 	assert(curenv);
 
 	// Garbage collect if current enviroment is a zombie

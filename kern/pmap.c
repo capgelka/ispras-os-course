@@ -205,6 +205,8 @@ mem_init(void)
 		PADDR(pages),
 		PTE_W | PTE_P
 	);
+	// size_t psize = ROUNDUP(sizeof(struct PageInfo) * npages, PGSIZE);
+
 	// boot_map_region(kern_pgdir, UPAGES, psize, PADDR(pages), PTE_U | PTE_P);
 	// boot_map_region(kern_pgdir, (uintptr_t)pages, psize, PADDR(pages), PTE_W | PTE_P);
 
@@ -218,7 +220,8 @@ mem_init(void)
 	boot_map_region(
 		kern_pgdir,
 		UENVS,
-		ROUNDUP(NENV * sizeof(struct Env), PGSIZE),
+		PTSIZE,
+		//ROUNDUP(NENV * sizeof(struct Env), PGSIZE),
 		PADDR(envs),
 		PTE_U | PTE_P
 	);
@@ -522,13 +525,14 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 	if (!pte_p) {
 		return -E_NO_MEM;
 	}
-	// tlb_invalidate(pgdir, va);
+	//tlb_invalidate(pgdir, va);
 	pp->pp_ref++;
 	if (*pte_p) {
 		page_remove(pgdir, va);
 	}
 	*pte_p = page2pa(pp) | perm | PTE_P;
-	pgdir[PDX(va)] = PTE_ADDR(pgdir[PDX(va)]) | perm | PTE_P;
+	//pgdir[PDX(va)] = PTE_ADDR(pgdir[PDX(va)]) | perm | PTE_P;
+	pgdir[PDX(va)] |= perm;
 
 	return 0;
 }
@@ -626,7 +630,18 @@ static uintptr_t user_mem_check_addr;
 int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
-	// LAB 8: Your code here.
+// 	LAB 8: Your code here.
+	uintptr_t end = (uintptr_t) ROUNDUP(va + len, PGSIZE);
+	for (int i = (uintptr_t) va;
+		 i < end;
+		 i = ROUNDDOWN(i + PGSIZE, PGSIZE)
+	) {
+		pte_t* pte_p = pgdir_walk(env->env_pgdir, (void*) i, 0);
+		if (!pte_p || i > ULIM || (int)(*pte_p & perm) != perm) {
+			user_mem_check_addr = i;
+			return -E_FAULT;
+		}
+	}
 
 	return 0;
 }

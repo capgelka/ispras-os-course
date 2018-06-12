@@ -72,7 +72,7 @@ i386_init(void)
 #endif
 
 	// Schedule and run the first user environment!
-	cprintf("run scheduler");
+	cprintf("run scheduler\n");
 	sched_yield();
 }
 

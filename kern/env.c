@@ -399,16 +399,25 @@ region_alloc(struct Env *e, void *va, size_t len)
 
 	for (int i = start; i < end; i += PGSIZE) {
 		struct PageInfo* pi = page_alloc(0);
-		if (pi == NULL) {
-			panic("region_alloc error: page_alloc failed");
-			return;
-		}
+		pte_t* pte = pgdir_walk(e->env_pgdir, (void*)i, 1);
+	    if (!pi || !pte) {
+	      int r = -E_NO_MEM;
+	      panic("region_alloc: %d ", r);
+	    }
+	    assert(*pte == 0);
+		*pte = page2pa(pi) | PTE_U | PTE_P | PTE_W;
+		// if (pi == NULL) {
+		// 	panic("region_alloc error: page_alloc failed");
+		// 	return;
+		// }
 
-		int rc = page_insert(e->env_pgdir, pi, (void *) start, PTE_U | PTE_W | PTE_P);
-		if (rc) {
-			panic("region_alloc eror: %i", rc);
-			return;
-		}
+		// int rc = page_insert(e->env_pgdir, pi, (void *) i, PTE_U | PTE_W | PTE_P);
+		// if (rc) {
+		// 	panic("region_alloc eror: %i", rc);
+		// 	return;
+		// }
+		cprintf("allocated page: %p %p\n", (void*) page2pa(pi), (void*) page2kva(pi));
+		//*(int*) i = 15;
 	}
 	// size_t size = ROUNDUP(va + len, PGSIZE) - ROUNDDOWN(va, PGSIZE);
 	// int i;
@@ -543,7 +552,7 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	struct Elf* elf = (struct Elf *) binary;
 	struct Proghdr *ph, *eph;
 
-	// lcr3(PADDR(e->env_pgdir));
+
 
 	ph = (struct Proghdr *) ((uint8_t *) elf + elf->e_phoff);
 	eph = ph + (elf->e_phnum * elf->e_phentsize);
@@ -553,19 +562,29 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 		(void*) PADDR(e->env_pgdir)
 	);
 
+	lcr3(PADDR(e->env_pgdir));
+
 	for (; ph < eph; ph++)
 		if (ph->p_type == ELF_PROG_LOAD) {
-			cprintf("%p !!!!!\n", (void *) ph->p_va);
-			cprintf("%d !!!!!\n", ph->p_memsz);
+			// cprintf("%p !!!!!\n", (void *) ph->p_va);
+			// cprintf("%d !!!!!\n", ph->p_memsz);
 			region_alloc(e, (void *)ph->p_va, ph->p_memsz);
-			cprintf("fail(\n");
+			// cprintf("fail(\n");
 
-			cprintf("@@@@@\n");
-			cprintf("%p !!!!!\n", (void *) ph->p_va);
-			cprintf("%p !!!!!\n", binary + ph->p_offset);
-			cprintf("%x !!!!!\n", ph->p_filesz);
+			// cprintf("@@@@@\n");
+			// cprintf("%p !!!!!\n", (void *) ph->p_va);
+			// cprintf("%p !!!!!\n", binary + ph->p_offset);
+			// cprintf("%x !!!!!\n", ph->p_filesz);
+
+			//pte_t* pte_p = pgdir_walk(e->pgdir, (void* ) ph->p_va, 0);
+			// cprintf("EXP===========\n");
+			// pte_t*  pt1 = pgdir_walk(e->env_pgdir, (void* ) ph->p_va, 0);
+			// pte_t*  pt2 = pgdir_walk(e->env_pgdir, (void* ) ph->p_va + ph->p_filesz, 0);
+			// cprintf("Page start: %p 0x%08x\n", pt1, PADDR(pt1));
+			// cprintf("Page end: %p 0x%08x\n", pt2, PADDR(pt2));
+			// cprintf("EXP=========== END\n");
+
 			memcpy((void *) ph->p_va, binary + ph->p_offset, ph->p_filesz);
-			cprintf("MEMSET OK");
 			memset(
 				(void*)(ph->p_va + ph->p_filesz),
 				0,
@@ -573,11 +592,7 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 			);
 			//memcpy((void *) ph->p_va, binary + ph->p_offset, ph->p_filesz);
 		}
-	cprintf("OOOOOOOOOO\n");
-	lcr3(PADDR(kern_pgdir));
-	// lcr3(PADDR(e->env_pgdir));
 	e->env_tf.tf_eip = elf->e_entry;
-
 
 	
 #ifdef CONFIG_KSPACE
@@ -588,6 +603,7 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	// at virtual address USTACKTOP - PGSIZE.
 	// LAB 8: Your code here.
 	region_alloc(e, (void *)(USTACKTOP - PGSIZE), PGSIZE);
+	lcr3(PADDR(kern_pgdir));
 }
 
 //
@@ -679,11 +695,11 @@ env_destroy(struct Env *e)
 	//LAB 3: Your code here.
 	env_free(e);
 	// cprintf("=== %d\n", curenv==e);
-	if(curenv == e)	{
-		// e->env_tf.tf_eip = entry_points[find_env_num(e)];
-		curenv = NULL;
-		sched_yield();
-	}
+	// if(curenv == e)	{
+	// 	// e->env_tf.tf_eip = entry_points[find_env_num(e)];
+	// 	curenv = NULL;
+	// 	sched_yield();
+	// }
 	cprintf("Destroyed the only environment - nothing more to do!\n");
 	while (1)
 		monitor(NULL);
@@ -798,6 +814,8 @@ env_run(struct Env *e)
 	curenv->env_status = ENV_RUNNING;
 	curenv->env_runs++;
 	lcr3(PADDR(e->env_pgdir));
+	cprintf("Run env %d\n", ENVX(e->env_id));
+	cprintf("%d\n", curenv==0);
 	env_pop_tf(&(e->env_tf));
 }
 
