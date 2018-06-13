@@ -688,11 +688,11 @@ env_destroy(struct Env *e)
 	//LAB 3: Your code here.
 	env_free(e);
 	// cprintf("=== %d\n", curenv==e);
-	// if(curenv == e)	{
-	// 	// e->env_tf.tf_eip = entry_points[find_env_num(e)];
-	// 	curenv = NULL;
-	// 	sched_yield();
-	// }
+	if(curenv == e)	{
+		// e->env_tf.tf_eip = entry_points[find_env_num(e)];
+		curenv = NULL;
+		sched_yield();
+	}
 	cprintf("Destroyed the only environment - nothing more to do!\n");
 	while (1)
 		monitor(NULL);
@@ -807,8 +807,7 @@ env_run(struct Env *e)
 	curenv->env_status = ENV_RUNNING;
 	curenv->env_runs++;
 	lcr3(PADDR(e->env_pgdir));
-	cprintf("Run env %d\n", ENVX(e->env_id));
-	cprintf("%d\n", curenv==0);
+	cprintf("Run env %d\n", ENVX(curenv->env_id));
 	env_pop_tf(&(e->env_tf));
 }
 
