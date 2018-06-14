@@ -228,7 +228,7 @@ trap_dispatch(struct Trapframe *tf)
 	// IRQ line or other reasons. We don't care.
 	//
 	if (tf->tf_trapno == T_PGFLT) {
-		cprintf("Page fault interrupt\n");
+		//cprintf("Page fault interrupt\n");
 		page_fault_handler(tf);
 		return;
 	}
@@ -292,7 +292,7 @@ trap(struct Trapframe *tf)
 		cprintf("Incoming TRAP frame at %p\n", tf);
 	}
 
-	cprintf("%d\n", curenv==0);
+	//cprintf("%d %d\n", curenv==0, tf->tf_trapno);
 	assert(curenv);
 
 	// Garbage collect if current enviroment is a zombie

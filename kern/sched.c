@@ -37,7 +37,7 @@ sched_yield(void)
 	//LAB 3: Your code here.
 	//sched_halt();
 	// debug_mem();
-	//show_env(curenv);
+	// show_env(curenv);
 	struct Env* next_env = NULL;
 	int curr = (int) (curenv - envs);
 	for (int i = curr; i < NENV; i++) {
@@ -60,6 +60,7 @@ sched_yield(void)
 
 run_env:
 	if (next_env) {
+		// show_env(next_env);
 		env_run(next_env);
 	}
 	// sched_halt never returns

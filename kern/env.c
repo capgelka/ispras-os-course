@@ -61,8 +61,15 @@ void show_env (struct Env* env) {
 	}
 
 
-	cprintf("Addr: %p\nNext: %p\nStatus: %s (%d)\n\n",
-		env, env->env_link, val, env->env_status);
+	cprintf(
+		"Addr: %p\nNext: %p\nStatus: %s (%d)\n id: %d %d\n\n",
+		env,
+		env->env_link,
+		val,
+		env->env_status,
+		env->env_id,
+		ENVX(env->env_id)
+	);
 }
 
 	
@@ -686,16 +693,29 @@ void
 env_destroy(struct Env *e)
 {
 	//LAB 3: Your code here.
+
+	// if (e->env_status == ENV_RUNNING && curenv != e) {
+	// 	e->env_status = ENV_DYING;
+	// 	return;
+	// }
+
+	// env_free(e);
+
+	// if (curenv == e) {
+	// 	curenv = NULL;
+	// 	sched_yield();
+	// }
+
 	env_free(e);
 	// cprintf("=== %d\n", curenv==e);
-	if(curenv == e)	{
+	if (curenv == e)	{
 		// e->env_tf.tf_eip = entry_points[find_env_num(e)];
-		curenv = NULL;
+		//curenv = NULL;
 		sched_yield();
 	}
-	cprintf("Destroyed the only environment - nothing more to do!\n");
-	while (1)
-		monitor(NULL);
+	// cprintf("Destroyed the only environment - nothing more to do!\n");
+	// while (1)
+	// 	monitor(NULL);
 }
 
 #ifdef CONFIG_KSPACE
@@ -807,7 +827,7 @@ env_run(struct Env *e)
 	curenv->env_status = ENV_RUNNING;
 	curenv->env_runs++;
 	lcr3(PADDR(e->env_pgdir));
-	cprintf("Run env %d\n", ENVX(curenv->env_id));
+	// cprintf("Run env %d\n", ENVX(curenv->env_id));
 	env_pop_tf(&(e->env_tf));
 }
 

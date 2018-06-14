@@ -87,7 +87,7 @@ duppage(envid_t envid, unsigned pn)
 
 	int rc = sys_page_map(0, va, envid, va, perm);
 	if (rc) {
-		panic("sys_page_map: %i", r);
+		panic("sys_page_map: %i", rc);
 	}
 	if (perm & PTE_SHARE) {
 		return 0;
@@ -95,7 +95,7 @@ duppage(envid_t envid, unsigned pn)
 
 	rc = sys_page_map(0, va, 0, va, perm);
 	if (rc) {
-		panic("sys_page_map: %i", r);
+		panic("sys_page_map: %i", rc);
 	}
 
 	return 0;
@@ -165,7 +165,7 @@ fork(void)
 		thisenv = envs + ENVX(sys_getenvid());
 	}
 
-return envid;
+    return envid;
 }
 
 // Challenge!
