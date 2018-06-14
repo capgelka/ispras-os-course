@@ -49,6 +49,27 @@ bc_pgfault(struct UTrapframe *utf)
 	//
 	// LAB 10: you code here:
 
+	// addr = ROUNDDOWN(addr, PGSIZE);
+	// r = sys_page_alloc(sys_getenvid(), addr, PTE_SYSCALL);
+	// if (r) {
+	// 	panic("bc_pgfault error: sys_page_alloc raise %i\n", r);
+	// }
+
+	// r = ide_read(blockno * BLKSECTS, addr, BLKSECTS);
+	// if (r) {
+	// 	panic("bc_pgfault error on ide_read(%d, %p, %d) call",
+	// 	      blockno * BLKSECTS, addr, BLKSECTS);
+	// }
+	addr = ROUNDDOWN(addr, BLKSIZE);
+
+	if (sys_page_alloc(0, addr, PTE_P | PTE_U | PTE_W)) {
+		panic("bc_pgfault: OOM");
+	}
+
+	if (ide_read(blockno * BLKSECTS, addr, BLKSECTS)) {
+		panic("bc_pgfault: ide read error");
+	}
+
 	// Clear the dirty bit for the disk block page since we just read the
 	// block from disk
 	if ((r = sys_page_map(0, addr, 0, addr, uvpt[PGNUM(addr)] & PTE_SYSCALL)) < 0)
@@ -71,13 +92,39 @@ bc_pgfault(struct UTrapframe *utf)
 void
 flush_block(void *addr)
 {
-	//uint32_t blockno = ((uint32_t)addr - DISKMAP) / BLKSIZE;
+	uint32_t blockno = ((uint32_t)addr - DISKMAP) / BLKSIZE;
 
 	if (addr < (void*)DISKMAP || addr >= (void*)(DISKMAP + DISKSIZE))
-		panic("flush_block of bad va %p", addr);
+		panic("flush_block of bad va %p\n", addr);
 
 	// LAB 10: Your code here.
-	panic("flush_block not implemented");
+	// if (va_is_mapped(addr) && va_is_dirty(addr)) {
+	// 	addr = ROUNDDOWN(addr, PGSIZE);
+	// 	int rc = ide_write(blockno * BLKSECTS, addr, BLKSECTS);
+	// 	if (rc) {
+	// 		panic("flush_block error on ide_write(%d, %p, %d)\n",
+	// 		      blockno * BLKSECTS, addr, BLKSECTS);
+	// 	}
+
+	// 	rc = sys_page_map(0, addr, 0, addr, uvpt[PGNUM(addr)] & PTE_SYSCALL);
+	// 	if (rc) {
+	// 		panic("sys_page_map error: %i\n", rc);
+	// 	}
+	// }
+
+	addr = ROUNDDOWN(addr, BLKSIZE);
+
+	if (!va_is_mapped(addr) || !va_is_dirty(addr)) {
+		return;
+	}
+
+	if (ide_write(BLKSECTS * blockno, addr, BLKSECTS)) {
+		panic("flush_block: ide write error");
+	}
+
+	if (sys_page_map(0, addr, 0, addr, uvpt[PGNUM(addr)] & PTE_SYSCALL)) {
+		panic("flush_block: page map error");
+	}
 }
 
 // Test that the block cache works, by smashing the superblock and
