@@ -74,26 +74,21 @@ void
 sched_halt(void)
 {
 	int i;
-	// cprintf("HALTING\n");
+
 	// For debugging and testing purposes, if there are no runnable
 	// environments in the system, then drop into the kernel monitor.
 	for (i = 0; i < NENV; i++) {
 		if ((envs[i].env_status == ENV_RUNNABLE ||
-		     envs[i].env_status == ENV_RUNNING)) {
-
-			// show_env(&envs[i]);
-			// debug_mem();
+		     envs[i].env_status == ENV_RUNNING ||
+		     envs[i].env_status == ENV_DYING))
 			break;
-		}
-
 	}
-	// cprintf("%d %d", i, NENV);
 	if (i == NENV) {
 		cprintf("No runnable environments in the system!\n");
 		while (1)
 			monitor(NULL);
 	}
-		// cprintf("HALTING\n");
+
 	// Mark that no environment is running on CPU
 	curenv = NULL;
 
@@ -106,6 +101,5 @@ sched_halt(void)
 		"sti\n"
 		"hlt\n"
 	: : "a" (cpu_ts.ts_esp0));
-	// cprintf("HALTED\n");
 }
 

@@ -13,7 +13,6 @@
 #include <kern/monitor.h>
 #include <kern/sched.h>
 #include <kern/cpu.h>
-#include <kern/kdebug.h>
 
 #ifdef CONFIG_KSPACE
 struct Env env_array[NENV];
@@ -25,8 +24,6 @@ struct Env *curenv = NULL;		// The current env
 #endif
 static struct Env *env_free_list;	// Free environment list
 					// (linked by Env->env_link)
-
-//static uint32_t entry_points[NENV];
 
 #define ENVGENSHIFT	12		// >= LOGNENV
 
@@ -353,7 +350,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	e->env_tf.tf_ss = GD_KD | 0;
 	e->env_tf.tf_cs = GD_KT | 0;
 	//LAB 3: Your code here.
-	// e->env_tf.tf_esp = KSTACKTOP;
+	// e->env_tf.tf_esp = 0x210000;
 #else
 	e->env_tf.tf_ds = GD_UD | 3;
 	e->env_tf.tf_es = GD_UD | 3;
@@ -377,7 +374,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	*newenv_store = e;
 
 	cprintf("[%08x] new env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
-	return 0;	
+	return 0;
 }
 
 //
@@ -512,6 +509,7 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	//  (The ELF header should have ph->p_filesz <= ph->p_memsz.)
 	//  Use functions from the previous labs to allocate and map pages.
 	//
+	//  All page protection bits should be user read/write for now.
 	//  ELF segments are not necessarily page-aligned, but you can
 	//  assume for this function that no two segments will touch
 	//  the same page.
@@ -626,6 +624,8 @@ env_create(uint8_t *binary, size_t size, enum EnvType type)
 	}
 	env->env_type = type;
 	load_icode(env, binary, size);
+	// If this is the file server (type == ENV_TYPE_FS) give it I/O privileges.
+	// LAB 10: Your code here.
 }
 
 //
