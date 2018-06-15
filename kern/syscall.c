@@ -384,7 +384,7 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 		}
 
 	}
-
+	
 	struct PageInfo *pi = page_lookup(curenv->env_pgdir, srcva, &pte_store);
 	// -E_INVAL if srcva < UTOP but srcva is not mapped in the caller's address space.
 	if (!pi && (uintptr_t) srcva < UTOP) {
@@ -394,11 +394,12 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 	if ((perm & PTE_W) == PTE_W && (*pte_store & PTE_W) != PTE_W) {
 			return -E_INVAL;
 	}
-
+	
 
 	if ((uintptr_t) e->env_ipc_dstva < UTOP) {
 
 		rc = page_insert(e->env_pgdir, pi, e->env_ipc_dstva, perm);
+
 		if (rc) {
 			return rc;
 		}
@@ -414,6 +415,46 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 	e->env_tf.tf_regs.reg_eax = 0;
 
 	return 0;
+	// struct Env *env;
+	// int res;
+
+	// if ((res = envid2env(envid, &env, 0)) < 0) {
+	// 	return res;
+	// }
+
+	// if (!env->env_ipc_recving) {
+	// 	return -E_IPC_NOT_RECV;
+	// }
+
+	// if (env->env_ipc_dstva == (void *)-1 || srcva == (void *)-1) {
+	// 	perm = 0;
+	// }
+
+	// if (perm) {
+	// 	if (srcva >= (void *)UTOP || (unsigned)srcva % PGSIZE != 0 || ((~PTE_SYSCALL & perm) != 0)) {
+	// 		return -E_INVAL;
+	// 	}
+
+	// 	struct PageInfo *pp = page_lookup(curenv->env_pgdir, srcva, 0);
+
+	// 	if (!pp) {
+	// 		return -E_INVAL;
+	// 	}
+
+	// 	if ((res = page_insert(env->env_pgdir, pp, env->env_ipc_dstva, PTE_U | perm)) < 0) {
+	// 		return res;
+	// 	}
+	// }
+
+	// env->env_ipc_recving = 0;
+	// env->env_ipc_from = curenv->env_id;
+	// env->env_ipc_value = value;
+	// env->env_ipc_perm = perm;
+
+	// env->env_tf.tf_regs.reg_eax = 0;
+	// env->env_status = ENV_RUNNABLE;
+
+	// return 0;
 
 }
 

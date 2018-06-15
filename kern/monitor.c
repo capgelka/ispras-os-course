@@ -143,7 +143,7 @@ mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 			current_frame.value,
 			current_frame.addr[1]
 		);
-		for (uint8_t i = 0; i < 5;  i++) {
+		for (uint8_t i = 0; i < 5; i++) {
 			cprintf("%08x ", current_frame.addr[i + 2]);
 		}
 		cprintf("%s", "\n");

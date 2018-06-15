@@ -27,16 +27,7 @@ static struct Env *env_free_list;	// Free environment list
 
 #define ENVGENSHIFT	12		// >= LOGNENV
 
-
-// int find_env_num(struct Env* env) {
-// 	for (int i = 0; i<NENV; i++) {
-// 		if (&env_array[i] == env) {
-// 			return i;
-// 		}
-
-// 	}
-// 	return -1;
-// }
+#define debug 0
 
 
 void show_env (struct Env* env) {
@@ -398,7 +389,9 @@ region_alloc(struct Env *e, void *va, size_t len)
 	uintptr_t start = ROUNDDOWN((uintptr_t) va, PGSIZE);
 	uintptr_t end = ROUNDUP((uintptr_t) va + len, PGSIZE);
 	// above UTOP is kernel part
-	cprintf("region alloc call: %p %d\n", va, len);
+	if (debug) {
+		cprintf("region alloc call: %p %d\n", va, len);
+	}
 
 	if (end > UTOP) {
 		panic(
@@ -420,7 +413,9 @@ region_alloc(struct Env *e, void *va, size_t len)
 			panic("region_alloc eror: %i", rc);
 			return;
 		}
-		cprintf("allocated page: %p %p\n", (void*) page2pa(pi), (void*) page2kva(pi));
+		if (debug) {
+			cprintf("allocated page: %p %p\n", (void*) page2pa(pi), (void*) page2kva(pi));
+		}
 	}
 }
 

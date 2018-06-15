@@ -553,12 +553,13 @@ page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 {
 	// Fill this function in
 	pte_t* pte_p = pgdir_walk(pgdir, va, 0);
-	if (!pte_p) {
+	if (!pte_p || !(*pte_p & PTE_P)) {
 		return NULL;
 	}
 	if (pte_store) {
 		*pte_store = pte_p;
 	}
+	//cprintf("pte_addr (%p): \n", (void*) PTE_ADDR(*pte_p));
 	return pa2page(PTE_ADDR(*pte_p));
 }
 
