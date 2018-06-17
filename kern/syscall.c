@@ -442,8 +442,7 @@ static int
 sys_gettime(void)
 {
 	// LAB 12: Your code here.
-	panic("sys_gettime not implemented");
-	return 0;
+	return gettime();
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
@@ -481,6 +480,8 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 			return sys_ipc_recv((void *)a1);
 		case SYS_env_set_trapframe:
 			return sys_env_set_trapframe(a1, (void *)a2);
+		case SYS_gettime:
+			return sys_gettime();
 		default:
 			return -E_INVAL;
 	}
