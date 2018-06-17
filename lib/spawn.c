@@ -300,6 +300,69 @@ static int
 copy_shared_pages(envid_t child)
 {
 	// LAB 11: Your code here.
+	int rc;
+	uintptr_t page_va;
+
+	for (page_va = 0; page_va < UTOP; page_va += PGSIZE) {
+		if (page_va == UXSTACKTOP - PGSIZE) { // user exception stack
+			continue;
+		}
+		if (
+			(uvpd[PDX(page_va)] & PTE_P) 
+			&& (uvpt[PGNUM(page_va)] & PTE_P)
+			&& (uvpt[PGNUM(page_va)] & PTE_SHARE)
+		) 	{
+				rc = sys_page_map(
+					0,
+					(void *) page_va,
+					child,
+					(void *) page_va,
+					uvpt[PGNUM(page_va)] & PTE_SYSCALL
+				);
+				if (rc) {
+					panic("sys_page_map: %i\n", rc);
+				}
+			}
+		}
+
 	return 0;
 }
 
+// for (unsigned i = 0; i < NPDENTRIES; ++i) {
+// 		if (!(uvpd[i] & PTE_U)) {
+// 			continue;
+// 		}
+
+// 		for (unsigned j = 0; j < NPTENTRIES; ++j) {
+// 			unsigned pn = (i << 10) + j;
+
+// 			if ((uvpt[pn] & PTE_U) && pn * PGSIZE < UTOP && pn != PGNUM(UXSTACKTOP-1)) {
+// 				duppage(envid, pn);
+// 			}
+// 		}
+// 	}
+
+
+
+// for (unsigned i = 0; i < NPDENTRIES; ++i) {
+// 		if (!(uvpd[i] & PTE_P)) {
+// 			continue;
+// 		}
+
+// 		for (unsigned j = 0; j < NPTENTRIES; ++j) {
+// 			unsigned pn = (i << 10) + j;
+
+// 			int perm = uvpt[pn] & PTE_SYSCALL;
+// 			bool is_shared = perm & PTE_SHARE;
+
+// 			if (is_shared && pn * PGSIZE < UTOP && pn != PGNUM(UXSTACKTOP-1)) {
+// 				int res;
+
+// 				void *addr = (void *)(pn * PGSIZE);
+
+// 				if ((res = sys_page_map(0, addr, child, addr, perm)) < 0) {
+// 					return res;
+// 				}
+// 			}
+// 		}
+// }
