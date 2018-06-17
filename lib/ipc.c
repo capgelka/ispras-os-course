@@ -67,7 +67,7 @@ ipc_send(envid_t to_env, uint32_t val, void *pg, int perm)
 {
 	// LAB 9: Your code here.
 	if (!pg) {
-		pg = (void *) KSTACKTOP;
+		pg = (void *) -1;
 	}
 
 	int rc;
@@ -79,29 +79,29 @@ ipc_send(envid_t to_env, uint32_t val, void *pg, int perm)
 				sys_yield();
 			}
 			else {
-				panic("ipc_send error: %i\n", rc);
+				panic("ipc_send error: %i (%d)\n", rc, rc);
 			}
 		}
 	} while(rc);
-	// int r;
+// 	int r;
 
-	// if (pg == NULL) {
-	// 	pg = (void *)-1;
-	// }
+// 	if (pg == NULL) {
+// 		pg = (void *) -1;
+// 	}
 
-	// while (true) {
-	// 	r = sys_ipc_try_send(to_env, val, pg, perm);
+// 	while (true) {
+// 		r = sys_ipc_try_send(to_env, val, pg, perm);
+// 		cprintf("r: %d\n", r);
+// 		if (r == 0) {
+// 			break;
+// 		}
 
-	// 	if (r == 0) {
-	// 		break;
-	// 	}
+// 		if (r != -E_IPC_NOT_RECV) {
+// 			panic("ipc_send: %d", r);
+// 		}
 
-	// 	if (r != -E_IPC_NOT_RECV) {
-	// 		panic("ipc_send: %d", r);
-	// 	}
-
-	// 	sys_yield();
-	// }
+// 		sys_yield();
+// 	}
 }
 
 // Find the first environment of the given type.  We'll use this to
