@@ -263,6 +263,8 @@ trap_dispatch(struct Trapframe *tf)
 		return;
 	}
 
+	// Handle keyboard and serial interrupts.
+	// LAB 11: Your code here.
 	print_trapframe(tf);
 	if (tf->tf_cs == GD_KT) {
 		panic("unhandled trap in kernel");
@@ -292,7 +294,6 @@ trap(struct Trapframe *tf)
 		cprintf("Incoming TRAP frame at %p\n", tf);
 	}
 
-	//cprintf("%d %d\n", curenv==0, tf->tf_trapno);
 	assert(curenv);
 
 	// Garbage collect if current enviroment is a zombie
