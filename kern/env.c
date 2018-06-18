@@ -14,6 +14,7 @@
 #include <kern/sched.h>
 #include <kern/cpu.h>
 #include <kern/time.h>
+#include <kern/tsc.h>
 
 #ifdef CONFIG_KSPACE
 struct Env env_array[NENV];
@@ -60,34 +61,6 @@ void show_env (struct Env* env) {
 		ENVX(env->env_id)
 	);
 }
-
-	
-
-
-// void
-// debug_mem () {
-// 	cprintf("=============================== \n");
-// 	cprintf("Arr Size %d\n", NENV);
-// 	struct Env* env_arr_start = env_array;
-// 	struct Env* ep = env_arr_start;
-// 	cprintf("Debug envs \n");
-// 	do  {	
-// 		show_env(ep);
-// 		ep++;
-		
-// 	}  while (ep != &envs[NENV-1]);
-// 	cprintf("-------------------------\n");
-// 	cprintf("Debug free\n");
-// 	ep = env_free_list;
-//        	do  {
-		
-// 		show_env(ep);
-// 		ep = ep->env_link;
-		
-// 	} while (ep != env_arr_start && ep != NULL);
-// 	cprintf("=============================== \n\n\n");
-	
-// }
 
 // extern unsigned int bootstacktop;
 
@@ -363,6 +336,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 
 	// init clock
 	clock_init(&e->env_time);
+	e->env_time_start = nanosec_from_timer();
 
 	// commit the allocation
 	env_free_list = e->env_link;

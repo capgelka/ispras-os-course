@@ -6,6 +6,9 @@
 
 #include <kern/kclock.h>
 #include <kern/picirq.h>
+#include <kern/time.h>
+#include <kern/tsc.h>
+
 
 struct Taskstate cpu_ts;
 void sched_halt(void);
@@ -38,6 +41,7 @@ sched_yield(void)
 	//sched_halt();
 	// debug_mem();
 	// show_env(curenv);
+	curenv->env_time_start = 0;
 	struct Env* next_env = NULL;
 	int curr = (int) (curenv - envs);
 	for (int i = curr; i < NENV; i++) {

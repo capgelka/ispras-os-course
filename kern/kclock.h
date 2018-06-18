@@ -6,6 +6,8 @@
 # error "This is a JOS kernel header; user programs should not #include it"
 #endif
 
+#include <inc/time.h>
+
 #define	IO_RTC		0x070		/* RTC port */
 
 #define	IO_RTC_CMND		0x070		/* RTC control port */
@@ -55,6 +57,7 @@ unsigned mc146818_read(unsigned reg);
 void mc146818_write(unsigned reg, unsigned datum);
 
 int gettime(void);
+int settime(struct tm* date);
 
 #define BCD2BIN(bcd) ((((bcd)&15) + ((bcd)>>4)*10))
 

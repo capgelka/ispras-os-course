@@ -449,8 +449,25 @@ sys_gettime(void)
 
 static int
 sys_clock_gettime(clockid_t clock_id, struct timespec* tp)
-{
-	return gettime();
+{	
+	time_t current;
+    switch(clock_id) {
+
+	    case CLOCK_REALTIME:
+	    	set_tp_from_timestamp(
+                tp,
+                gettime()
+            );
+	        break;
+	    case CLOCK_MONOTONIC:
+	    	current = nanosec_from_timer();
+	    	tp->tv_nsec = current - monotonic_time_start;
+	    	normilize_time(tp);
+	    	break;
+	    case CLOCK_PROCESS_CPUTIME_ID:
+	    	break;
+	}
+	return 0;
 }
 
 static int
@@ -473,25 +490,24 @@ sys_clock_getres(clockid_t clock_id, struct timespec* res)
 static int
 sys_clock_settime(clockid_t clock_id, struct timespec* tp)
 {
+    struct tm date;
+
 	if (tp == NULL || check_clock_arg(clock_id)) {
         return -E_INVAL;
     }
+    
     switch(clock_id) {
 
         case CLOCK_REALTIME:
-            set_tp_from_timestamp(
-                tp,
-                sys_gettime()
-            );
+	        mktime(tp->tv_sec, &date);
+            settime(&date);
             break;
         case CLOCK_MONOTONIC:
-            tp->tv_nsec = nanosec_from_timer();
-            normilize_time(tp);
+            monotonic_time_start = tp->tv_nsec + tp->tv_sec * 1000000000;
             break;
         case CLOCK_PROCESS_CPUTIME_ID:
             break;
     }
-
 
     return 0;
 }

@@ -20,6 +20,18 @@ read_clock(struct tm* date)
     return 0;
 }
 
+int
+settime(struct tm* date)
+{
+    mc146818_write(RTC_SEC, date->tm_sec);
+    mc146818_write(RTC_MIN, date->tm_min);
+    mc146818_write(RTC_HOUR, date->tm_hour);
+    mc146818_write(RTC_DAY, date->tm_mday);
+    mc146818_write(RTC_MON, date->tm_mon + 1);
+    mc146818_write(RTC_YEAR, date->tm_year);
+
+    return 0;
+}
 
 int gettime(void)
 {

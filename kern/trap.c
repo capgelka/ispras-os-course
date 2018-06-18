@@ -15,10 +15,15 @@
 #include <kern/picirq.h>
 #include <kern/cpu.h>
 #include <kern/vsyscall.h>
+#include <kern/time.h>
+#include <kern/tsc.h>
 
 #ifndef debug
 # define debug 0
 #endif
+
+time_t monotonic_time_start;
+time_t monotonic_time_current;
 
 static struct Taskstate ts;
 
@@ -174,6 +179,8 @@ clock_idt_init(void)
 	lidt(&idt_pd);
 
 	vsys[VSYS_gettime] = gettime();
+	monotonic_time_start = nanosec_from_timer();
+	monotonic_time_current = monotonic_time_start;
 }
 
 
