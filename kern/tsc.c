@@ -201,6 +201,24 @@ int second_from_timer(void)
 	return read_tsc() / cpu_freq / 1000;
 }
 
+int nanosec_from_timer(void)
+{
+	return (read_tsc() / cpu_freq) * 1000000;
+}
+
+int nanosec_interval(void)
+{
+	int fst = read_tsc() / cpu_freq;
+	int snd = read_tsc() / cpu_freq;
+	int delta = snd - fst;
+	if (delta) {
+		return delta * 1000000;
+	}
+	else {
+		return 1000000;
+	}
+}
+
 void timer_start(void)
 {
 	timer_start_time = second_from_timer();
