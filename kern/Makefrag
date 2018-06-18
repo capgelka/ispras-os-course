@@ -33,7 +33,7 @@ KERN_SRCFILES :=	kern/entry.S \
 			lib/string.c \
 			kern/tsc.c \
 			kern/spinlock.c \
-			kern/time.c
+			kern/time.c 
 
 ifeq ($(CONFIG_KSPACE),y)
 KERN_SRCFILES += kern/alloc.c
@@ -100,7 +100,9 @@ KERN_BINFILES :=	user/hello \
 			user/testpteshare \
 			user/testshell \
 			user/date \
-			user/vdate
+			user/vdate \
+			user/clock
+
 KERN_BINFILES := $(patsubst %, $(OBJDIR)/%, $(KERN_BINFILES))
 endif
 

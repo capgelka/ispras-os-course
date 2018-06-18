@@ -49,9 +49,9 @@ int clock_nanosleep(clockid_t clock_id, int flags, const struct timespec
 
 // int normilize_time(struct timespec* tp);
 
-// #define CLOCK_MONOTONIC 1
-// #define CLOCK_REALTIME 2
-// #define CLOCK_PROCESS_CPUTIME_ID 3
+#define CLOCK_MONOTONIC 1
+#define CLOCK_REALTIME 2
+#define CLOCK_PROCESS_CPUTIME_ID 3
 
 // typedef uint8_t clockid_t;
 
