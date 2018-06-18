@@ -169,6 +169,8 @@ mem_init(void)
 	//////////////////////////////////////////////////////////////////////
 	// Make 'vsys' point to an array of size 'NVSYSCALLS' of int.
 	// LAB 12: Your code here.
+	vsys = boot_alloc(ROUNDUP(sizeof(int32_t) * NVSYSCALLS, PGSIZE));
+	memset(vsys, 0, ROUNDUP(sizeof(int32_t) * NVSYSCALLS, PGSIZE));
 
 	//////////////////////////////////////////////////////////////////////
 	// Now that we've allocated the initial kernel data structures, we set
@@ -218,7 +220,7 @@ mem_init(void)
 		UPAGES,
 		PTSIZE,
 		PADDR(pages),
-		PTE_U
+		PTE_U | PTE_P
 	);
 
 	// size_t psize = ROUNDUP(sizeof(struct PageInfo) * npages, PGSIZE);
@@ -248,6 +250,7 @@ mem_init(void)
 	//    - the new image at UVSYS  -- kernel R, user R
 	//    - envs itself -- kernel RW, user NONE
 	// LAB 12: Your code here.
+	boot_map_region(kern_pgdir, UVSYS, PGSIZE, PADDR(vsys), PTE_U | PTE_P);
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
