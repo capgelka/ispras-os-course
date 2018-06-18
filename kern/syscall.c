@@ -462,7 +462,7 @@ sys_clock_gettime(clockid_t clock_id, struct timespec* tp)
 	    case CLOCK_MONOTONIC:
 	    	current = nanosec_from_timer();
 	    	tp->tv_nsec = current - monotonic_time_start;
-	    	normilize_time(tp);
+	    	normalize_time(tp);
 	    	break;
 	    case CLOCK_PROCESS_CPUTIME_ID:
 	    	break;
@@ -488,14 +488,14 @@ sys_clock_getres(clockid_t clock_id, struct timespec* res)
 }
 
 static int
-sys_clock_settime(clockid_t clock_id, struct timespec* tp)
+sys_clock_settime(clockid_t clock_id, const struct timespec* tp)
 {
     struct tm date;
 
 	if (tp == NULL || check_clock_arg(clock_id)) {
         return -E_INVAL;
     }
-    
+
     switch(clock_id) {
 
         case CLOCK_REALTIME:
@@ -516,7 +516,7 @@ static int
 sys_clock_nanosleep(
 	clockid_t clock_id,
 	int flags,
-	struct timespec* rqtp,
+	const struct timespec* rqtp,
 	struct timespec* rmtp
 )
 {

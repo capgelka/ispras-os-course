@@ -132,7 +132,7 @@ int sys_clock_getres(clockid_t clock_id, struct timespec* res)
 	return syscall(SYS_clock_getres, clock_id, (uint32_t) res, 0, 0, 0, 0);
 }
 
-int sys_clock_settime(clockid_t clock_id, struct timespec* tp)
+int sys_clock_settime(clockid_t clock_id, const struct timespec* tp)
 {
    return syscall(SYS_clock_settime, clock_id, (uint32_t) tp, 0, 0, 0, 0);
 }
@@ -140,7 +140,7 @@ int sys_clock_settime(clockid_t clock_id, struct timespec* tp)
 int sys_clock_nanosleep(
 	clockid_t clock_id,
 	int flags,
-	struct timespec* rqtp,
+	const struct timespec* rqtp,
 	struct timespec* rmtp
 )
 {

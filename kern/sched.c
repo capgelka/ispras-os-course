@@ -41,7 +41,8 @@ sched_yield(void)
 	//sched_halt();
 	// debug_mem();
 	// show_env(curenv);
-	curenv->env_time_start = 0;
+	curenv->env_time.tv_nsec += nanosec_from_timer() - curenv->env_time_start;
+	normalize_time(&curenv->env_time);
 	struct Env* next_env = NULL;
 	int curr = (int) (curenv - envs);
 	for (int i = curr; i < NENV; i++) {

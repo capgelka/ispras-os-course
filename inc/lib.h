@@ -63,6 +63,17 @@ int	sys_ipc_recv(void *rcv_pg);
 int sys_gettime(void);
 
 int vsys_gettime(void);
+int sys_clock_gettime(clockid_t clock_id, struct timespec* tp);
+int sys_clock_getres(clockid_t clock_id, struct timespec* res);
+
+int sys_clock_settime(clockid_t clock_id, const struct timespec* tp);
+
+int sys_clock_nanosleep(
+	clockid_t clock_id,
+	int flags,
+	const struct timespec* rqtp,
+	struct timespec* rmtp
+);
 
 // This must be inlined.  Exercise for reader: why?
 static __inline envid_t __attribute__((always_inline))
@@ -126,6 +137,8 @@ int	pipeisclosed(int pipefd);
 void	wait(envid_t env);
 
 // time.c
+typedef uint32_t time_t;
+
 bool is_leap_year(int year);
 int d_to_s(int d);
 int timestamp(struct tm *time);

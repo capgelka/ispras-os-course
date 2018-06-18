@@ -1,4 +1,6 @@
 #include <inc/time.h>
+// #include <lib/syscall.h>
+#include <inc/lib.h>
 
 bool is_leap_year(int year)
 {
@@ -84,4 +86,30 @@ void snprint_datetime(char *buf, int size, struct tm *tm)
           "%04d-%02d-%02d %02d:%02d:%02d",
           tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
           tm->tm_hour, tm->tm_min, tm->tm_sec);
+}
+
+int clock_getres(clockid_t clock_id, struct timespec *res)
+{
+    return sys_clock_getres(clock_id, res);
+}
+
+
+int clock_gettime(clockid_t clock_id, struct timespec *tp)
+{
+    return sys_clock_gettime(clock_id, tp);
+}
+
+int clock_settime(clockid_t clock_id, const struct timespec *tp)
+{
+    return sys_clock_settime(clock_id, tp);
+}
+
+int clock_nanosleep(
+    clockid_t clock_id,
+    int flags,
+    const struct timespec *rqtp, 
+    struct timespec *rmtp
+)
+{
+    return sys_clock_nanosleep(clock_id, flags, rqtp, rmtp);
 }
