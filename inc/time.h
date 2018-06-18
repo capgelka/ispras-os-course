@@ -41,11 +41,15 @@ void print_datetime(struct tm *tm);
 void snprint_datetime(char *buf, int size, struct tm *tm);
 
 
+int clock_init(struct timespec* tp);
+
 int clock_getres(clockid_t clock_id, struct timespec *res);
 int clock_gettime(clockid_t clock_id, struct timespec *tp);
 int clock_settime(clockid_t clock_id, const struct timespec *tp);
 int clock_nanosleep(clockid_t clock_id, int flags, const struct timespec
 *rqtp, struct timespec *rmtp);
+
+int dummy_clock_getres(clockid_t clock_id, struct timespec res);
 
 // int normilize_time(struct timespec* tp);
 

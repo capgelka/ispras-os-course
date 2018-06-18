@@ -20,15 +20,29 @@ void umain(int argc, char **argv) {
 
     struct timespec tr;
     struct timespec tc;
+    clock_init(&tr);
+    clock_init(&tc);
 
     cprintf("CLOCK_MONOTONIC tests:\n");
-    clock_getres(CLOCK_MONOTONIC, &tr);
-    view_tc(&tr);
+    // clock_getres(CLOCK_MONOTONIC, &tr);
+    // view_tc(&tr);
     clock_gettime(CLOCK_MONOTONIC, &tc);
     view_tc(&tc);
     tc.tv_sec = 0;
     clock_settime(CLOCK_MONOTONIC, &tc);
     clock_gettime(CLOCK_MONOTONIC, &tc);
+    sys_yield();
+    view_tc(&tc);
+
+    cprintf("CLOCK_REALTIME tests:\n");
+    // clock_getres(CLOCK_REALTIME, &tr);
+    // view_tc(&tr);
+    clock_gettime(CLOCK_REALTIME, &tc);
+    view_tc(&tc);
+    tc.tv_sec = 0;
+    clock_settime(CLOCK_REALTIME, &tc);
+    clock_gettime(CLOCK_REALTIME, &tc);
+    sys_yield();
     view_tc(&tc);
 
 

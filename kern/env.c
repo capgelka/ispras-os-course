@@ -804,6 +804,7 @@ env_run(struct Env *e)
 	curenv->env_runs++;
 	curenv->env_time_start = nanosec_from_timer();
 	normalize_time(&curenv->env_time);
+	
 	lcr3(PADDR(e->env_pgdir));
 	// cprintf("Run env %d\n", ENVX(curenv->env_id));
 	env_pop_tf(&(e->env_tf));

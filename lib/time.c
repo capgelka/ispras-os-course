@@ -88,9 +88,37 @@ void snprint_datetime(char *buf, int size, struct tm *tm)
           tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
 
+
+void _view_tc(struct timespec* tp) {
+    cprintf(
+        "show time spec:\n\tseconds: %d\n\tnanoseconds: %ld\n",
+        tp->tv_sec,
+        tp->tv_nsec
+    );
+}
+
+int clock_init(struct timespec* tp)
+{   
+    tp->tv_sec = 0;
+    tp->tv_nsec = 0;
+
+    return 0;
+}
+
+
 int clock_getres(clockid_t clock_id, struct timespec *res)
 {
-    return sys_clock_getres(clock_id, res);
+    uint32_t* addr = (uint32_t*)vsys;
+    //(struct timespec*) addr = *res;
+    cprintf("SSSS !!!!!!!>>>>");
+    addr += 100;
+    struct timespec* ts = (struct timespec*) addr;
+    _view_tc(ts);
+    _view_tc(res);
+    *ts = *res;
+    // ts = vsys;
+    cprintf("CALLLLLLLLL\n");
+    return sys_clock_getres(clock_id, (struct timespec* ) res);
 }
 
 
@@ -112,4 +140,9 @@ int clock_nanosleep(
 )
 {
     return sys_clock_nanosleep(clock_id, flags, rqtp, rmtp);
+}
+
+int dummy_clock_getres(clockid_t clock_id, struct timespec res)
+{
+    return clock_getres(clock_id, &res);
 }

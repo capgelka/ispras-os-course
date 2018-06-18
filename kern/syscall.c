@@ -451,15 +451,18 @@ static int
 sys_clock_gettime(clockid_t clock_id, struct timespec* tp)
 {	
 	time_t current;
+	cprintf("call gettime %d\n", clock_id);
     switch(clock_id) {
 
 	    case CLOCK_REALTIME:
+	    	cprintf("REALTIMEW HANDLER\n");
 	    	set_tp_from_timestamp(
                 tp,
                 gettime()
             );
 	        break;
 	    case CLOCK_MONOTONIC:
+	    	cprintf("MONOTONIC HANDLER\n");
 	    	current = nanosec_from_timer();
 	    	tp->tv_nsec = current - monotonic_time_start;
 	    	normalize_time(tp);
@@ -467,20 +470,33 @@ sys_clock_gettime(clockid_t clock_id, struct timespec* tp)
 	    case CLOCK_PROCESS_CPUTIME_ID:
 	    	break;
 	}
+	cprintf("WTF??");
 	return 0;
 }
 
 static int
 sys_clock_getres(clockid_t clock_id, struct timespec* res)
 {
+
+	// struct Env *env;
+	// int res;
+
+	// if ((res = envid2env(curenv-->env_id, &env, 0)) < 0) {
+	// 	return res;
+	// }
+	cprintf("CALL CLOCK GETRES");
 	if (res == NULL && check_clock_arg(clock_id)) {
+		cprintf("00000000000)))))))");
         return -E_INVAL;
     }
     if (clock_id != CLOCK_REALTIME) {
+    	cprintf("!!!!!!!!!!!111111111111111111e");
+    	cprintf("%ld =======\n\n", res->tv_nsec);
         res->tv_nsec = nanosec_interval();
         res->tv_sec = 0;
     }
     else {
+    	cprintf("22222222222222222222222222222222");
         res->tv_nsec = 0;
         res->tv_sec = 1;
     }
@@ -566,7 +582,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 		case SYS_clock_gettime:
 			return sys_clock_gettime(a1, (void *)a2);
 		case SYS_clock_settime:
-			return sys_clock_gettime(a1, (void *)a2);
+			return sys_clock_settime(a1, (void *)a2);
 		case SYS_clock_nanosleep:
 			return sys_clock_nanosleep(a1, a2, (void *)a3, (void *)a4);
 		default:
