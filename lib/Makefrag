@@ -27,7 +27,8 @@ LIB_SRCFILES :=		$(LIB_SRCFILES) \
 			lib/pageref.c \
 			lib/spawn.c \
 			lib/pipe.c \
-			lib/wait.c
+			lib/wait.c \
+			lib/time.c \
 
 LIB_SRCFILES :=		$(LIB_SRCFILES) \
 			lib/vsyscall.c

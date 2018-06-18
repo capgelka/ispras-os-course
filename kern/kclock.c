@@ -1,7 +1,7 @@
 /* See COPYRIGHT for copyright information. */
 
 #include <inc/x86.h>
-#include <inc/time.h>
+#include <kern/time.h>
 #include <inc/string.h>
 
 #include <kern/kclock.h>

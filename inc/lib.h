@@ -21,7 +21,7 @@
 #include <inc/fs.h>
 #include <inc/fd.h>
 #include <inc/args.h>
-// #include <inc/time.h>
+#include <inc/time.h>
 
 #define USED(x)		(void)(x)
 
@@ -124,6 +124,15 @@ int	pipeisclosed(int pipefd);
 
 // wait.c
 void	wait(envid_t env);
+
+// time.c
+bool is_leap_year(int year);
+int d_to_s(int d);
+int timestamp(struct tm *time);
+void mktime(int time, struct tm *tm);
+void print_datetime(struct tm *tm);
+void snprint_datetime(char *buf, int size, struct tm *tm);
+
 
 /* File open modes */
 #define	O_RDONLY	0x0000		/* open for reading only */

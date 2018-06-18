@@ -33,8 +33,7 @@ KERN_SRCFILES :=	kern/entry.S \
 			lib/string.c \
 			kern/tsc.c \
 			kern/spinlock.c \
-			inc/time.h
-
+			kern/time.c
 
 ifeq ($(CONFIG_KSPACE),y)
 KERN_SRCFILES += kern/alloc.c

@@ -4,7 +4,6 @@
 #include <inc/error.h>
 #include <inc/string.h>
 #include <inc/assert.h>
-#include <inc/time.h>
 
 #include <kern/env.h>
 #include <kern/pmap.h>
@@ -14,6 +13,7 @@
 #include <kern/sched.h>
 #include <kern/kclock.h>
 #include <kern/tsc.h>
+#include <kern/time.h>
 
 // Print a string to the system console.
 // The string is exactly 'len' characters long.
@@ -444,13 +444,13 @@ static int
 sys_gettime(void)
 {
 	// LAB 12: Your code here.
-	return 0; //gettime();
+	return gettime();
 }
 
 static int
 sys_clock_gettime(clockid_t clock_id, struct timespec* tp)
 {
-	return 0;//gettime();
+	return gettime();
 }
 
 static int
