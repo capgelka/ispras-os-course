@@ -4,7 +4,6 @@
 #include <inc/error.h>
 #include <inc/string.h>
 #include <inc/assert.h>
-#include <inc/vsyscall.h>
 
 #include <kern/env.h>
 #include <kern/pmap.h>
@@ -13,7 +12,6 @@
 #include <kern/console.h>
 #include <kern/sched.h>
 #include <kern/kclock.h>
-#include <kern/vsyscall.h>
 
 // Print a string to the system console.
 // The string is exactly 'len' characters long.
@@ -444,8 +442,6 @@ static int
 sys_gettime(void)
 {
 	// LAB 12: Your code here.
-    cprintf("mem addr: %p, valL %d\n", (void *) UVSYS + VSYS_gettime, *((int32_t *)UVSYS + VSYS_gettime));
-    cprintf("***** %d \n", vsys[VSYS_gettime]);
 	return gettime();
 }
 

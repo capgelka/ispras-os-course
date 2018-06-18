@@ -115,16 +115,15 @@
 #define UPAGES		(UVPT - PTSIZE)
 // Read-only copies of the global env structures
 #define UENVS		(UPAGES - PTSIZE)
-// Read-only virtual syscall space
-// LAB 12: Your code here.
-#define UVSYS       (2*PTSIZE) // we move UTEXT upper so 4 page table sirs for this 
+
+#define UVSYS       (UENVS - PTSIZE)
 
 /*
  * Top of user VM. User can manipulate VA from UTOP-1 and down!
  */
 
 // Top of user-accessible VM
-#define UTOP		UENVS
+#define UTOP		UVSYS
 // Top of one-page user exception stack
 #define UXSTACKTOP	UTOP
 // Next page left invalid to guard against exception stack overflow; then:
@@ -132,7 +131,7 @@
 #define USTACKTOP	(UTOP - 2*PGSIZE)
 
 // Where user programs generally begin
-#define UTEXT		(UVSYS + PGSIZE)
+#define UTEXT		(2*PTSIZE)
 
 // Used for temporary page mappings.  Typed 'void*' for convenience
 #define UTEMP		((void*) PTSIZE)
