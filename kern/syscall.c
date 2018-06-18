@@ -4,6 +4,7 @@
 #include <inc/error.h>
 #include <inc/string.h>
 #include <inc/assert.h>
+#include <inc/time.h>
 
 #include <kern/env.h>
 #include <kern/pmap.h>
@@ -12,6 +13,7 @@
 #include <kern/console.h>
 #include <kern/sched.h>
 #include <kern/kclock.h>
+#include <kern/tsc.h>
 
 // Print a string to the system console.
 // The string is exactly 'len' characters long.
@@ -442,8 +444,69 @@ static int
 sys_gettime(void)
 {
 	// LAB 12: Your code here.
-	return gettime();
+	return 0; //gettime();
 }
+
+static int
+sys_clock_gettime(clockid_t clock_id, struct timespec* tp)
+{
+	return 0;//gettime();
+}
+
+static int
+sys_clock_getres(clockid_t clock_id, struct timespec* res)
+{
+	if (res == NULL && check_clock_arg(clock_id)) {
+        return -E_INVAL;
+    }
+    if (clock_id != CLOCK_REALTIME) {
+        res->tv_nsec = nanosec_interval();
+        res->tv_sec = 0;
+    }
+    else {
+        res->tv_nsec = 0;
+        res->tv_sec = 1;
+    }
+    return 0;
+}
+
+static int
+sys_clock_settime(clockid_t clock_id, struct timespec* tp)
+{
+	if (tp == NULL || check_clock_arg(clock_id)) {
+        return -E_INVAL;
+    }
+    switch(clock_id) {
+
+        case CLOCK_REALTIME:
+            set_tp_from_timestamp(
+                tp,
+                sys_gettime()
+            );
+            break;
+        case CLOCK_MONOTONIC:
+            tp->tv_nsec = nanosec_from_timer();
+            normilize_time(tp);
+            break;
+        case CLOCK_PROCESS_CPUTIME_ID:
+            break;
+    }
+
+
+    return 0;
+}
+
+static int
+sys_clock_nanosleep(
+	clockid_t clock_id,
+	int flags,
+	struct timespec* rqtp,
+	struct timespec* rmtp
+)
+{
+	return 0;
+}
+
 
 // Dispatches to the correct kernel function, passing the arguments.
 int32_t
@@ -482,6 +545,14 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 			return sys_env_set_trapframe(a1, (void *)a2);
 		case SYS_gettime:
 			return sys_gettime();
+		case SYS_clock_getres:
+			return sys_clock_getres(a1, (void *)a2);
+		case SYS_clock_gettime:
+			return sys_clock_gettime(a1, (void *)a2);
+		case SYS_clock_settime:
+			return sys_clock_gettime(a1, (void *)a2);
+		case SYS_clock_nanosleep:
+			return sys_clock_nanosleep(a1, a2, (void *)a3, (void *)a4);
 		default:
 			return -E_INVAL;
 	}

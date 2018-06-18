@@ -1,9 +1,11 @@
 /* See COPYRIGHT for copyright information. */
 
 #include <inc/x86.h>
-#include <kern/kclock.h>
 #include <inc/time.h>
 #include <inc/string.h>
+
+#include <kern/kclock.h>
+
 
 int
 read_clock(struct tm* date)

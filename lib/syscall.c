@@ -121,3 +121,36 @@ int sys_gettime(void)
 {
 	return syscall(SYS_gettime, 0, 0, 0, 0, 0, 0);
 }
+
+// int sys_clock_gettime(clockid_t clock_id, struct timespec* tp)
+// {
+// 	return syscall(SYS_clock_gettime, clock_id, (uint32_t) tp, 0, 0, 0, 0);
+// }
+
+// int sys_clock_getres(clockid_t clock_id, struct timespec* res)
+// {
+// 	return syscall(SYS_clock_getres, clock_id, (uint32_t) res, 0, 0, 0, 0);
+// }
+
+// int sys_clock_settime(clockid_t clock_id, struct timespec* tp)
+// {
+//    return syscall(SYS_clock_settime, clock_id, (uint32_t) tp, 0, 0, 0, 0);
+// }
+
+// int sys_clock_nanosleep(
+// 	clockid_t clock_id,
+// 	int flags,
+// 	struct timespec* rqtp,
+// 	struct timespec* rmtp
+// )
+// {
+// 	return syscall(
+// 		SYS_clock_nanosleep,
+// 		clock_id,
+// 		flags,
+// 		(uint32_t) rqtp,
+// 		(uint32_t) rmtp,
+// 		0,
+// 		0
+// 	);
+// }

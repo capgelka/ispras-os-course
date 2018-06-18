@@ -6,6 +6,8 @@
 
 typedef uint32_t time_t;
 
+#define NANOSECONDS 1000000
+
 struct tm
 {
     int tm_sec;                   /* Seconds.     [0-60] */
@@ -22,7 +24,6 @@ struct timespec
     time_t  tv_sec;
     long    tv_nsec;
 };
-
 
 
 bool is_leap_year(int year)
@@ -112,7 +113,15 @@ void snprint_datetime(char *buf, int size, struct tm *tm)
 }
 
 
-
+int normilize_time(struct timespec* tp)
+{   
+    int seconds = tp->tv_nsec % NANOSECONDS;
+    if (seconds) {
+        tp->tv_sec += seconds;
+        tp->tv_nsec = (tp->tv_nsec / NANOSECONDS);
+    }
+    return 0;
+}
 
 #define CLOCK_MONOTONIC 1
 #define CLOCK_REALTIME 2
@@ -120,9 +129,28 @@ void snprint_datetime(char *buf, int size, struct tm *tm)
 
 typedef uint8_t clockid_t;
 
-int clock_getres(clockid_t clock_id, struct timespec *res);
-int clock_gettime(clockid_t clock_id, struct timespec *tp);
-int clock_settime(clockid_t clock_id, const struct timespec *tp);
+int check_clock_arg(clockid_t cl)
+{
+    return (
+        cl == CLOCK_MONOTONIC ||
+        cl == CLOCK_REALTIME ||
+        cl == CLOCK_PROCESS_CPUTIME_ID
+    );
+}
+
+int set_tp_from_timestamp(struct timespec* tp, int tstamp)
+{
+    tp->tv_sec = (time_t) tstamp;
+    tp->tv_nsec = 0;
+    return 0;
+}
+
+
+// int clock_getres(clockid_t clock_id, struct timespec *res);
+// int clock_gettime(clockid_t clock_id, struct timespec *tp);
+// int clock_settime(clockid_t clock_id, const struct timespec *tp);
+// int clock_nanosleep(clockid_t clock_id, int flags, const struct timespec
+// *rqtp, struct timespec *rmtp);
 
 #endif
 // В рамках решения индивидуального задания от Вас требуется реализовать
