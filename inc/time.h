@@ -6,6 +6,7 @@
 #define JOS_INC_TIME_H
 
 typedef uint32_t time_t;
+typedef uint8_t clockid_t;
 
 #define NANOSECONDS 1000000
 

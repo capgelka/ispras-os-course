@@ -13,6 +13,7 @@
 #include <kern/monitor.h>
 #include <kern/sched.h>
 #include <kern/cpu.h>
+#include <kern/time.h>
 
 #ifdef CONFIG_KSPACE
 struct Env env_array[NENV];
@@ -359,6 +360,9 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 
 	// Also clear the IPC receiving flag.
 	e->env_ipc_recving = 0;
+
+	// init clock
+	clock_init(&e->env_time);
 
 	// commit the allocation
 	env_free_list = e->env_link;
