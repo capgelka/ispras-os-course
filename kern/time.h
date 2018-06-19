@@ -4,10 +4,9 @@
 #define JOS_KERN_TIME_H
 
 
-#define NANOSECONDS 1000000
 #include <inc/time.h>
 
-extern time_t monotonic_time_start;
+extern long long monotonic_time_start;
 extern time_t monotonic_time_current;
 
 // bool is_leap_year(int year);

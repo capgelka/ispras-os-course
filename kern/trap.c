@@ -22,8 +22,8 @@
 # define debug 0
 #endif
 
-time_t monotonic_time_start;
-time_t monotonic_time_current;
+long long monotonic_time_start;
+// time_t monotonic_time_current;
 
 static struct Taskstate ts;
 
@@ -180,7 +180,7 @@ clock_idt_init(void)
 
 	vsys[VSYS_gettime] = gettime();
 	monotonic_time_start = nanosec_from_timer();
-	monotonic_time_current = monotonic_time_start;
+	//monotonic_time_current = monotonic_time_start;
 }
 
 

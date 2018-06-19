@@ -9,7 +9,7 @@
 void tsc_calibrate(void);
 void timer_start(void);
 void timer_stop(void);
-int nanosec_interval(void);
-int nanosec_from_timer(void);
+long long nanosec_interval(void);
+long long nanosec_from_timer(void);
 
 #endif	// !JOS_KERN_TSC_H

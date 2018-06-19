@@ -8,9 +8,6 @@
 
 #include <inc/time.h>
 
-extern    struct timespec tr;
-extern    struct timespec tc;
-
 #define	IO_RTC		0x070		/* RTC port */
 
 #define	IO_RTC_CMND		0x070		/* RTC control port */

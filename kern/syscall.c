@@ -451,26 +451,38 @@ static int
 sys_clock_gettime(clockid_t clock_id, struct timespec* tp)
 {	
 	time_t current;
-	cprintf("call gettime %d\n", clock_id);
     switch(clock_id) {
 
 	    case CLOCK_REALTIME:
-	    	cprintf("REALTIMEW HANDLER\n");
 	    	set_tp_from_timestamp(
                 tp,
                 gettime()
             );
 	        break;
 	    case CLOCK_MONOTONIC:
-	    	cprintf("MONOTONIC HANDLER\n");
+	//     		cprintf(
+	// 	"WAF IN TP:\n\tseconds: %d\n\tnanoseconds: %lld\n",
+	// 	tp->tv_sec,
+	// 	tp->tv_nsec
+	// );
 	    	current = nanosec_from_timer();
+	    	tp->tv_sec = 0;
 	    	tp->tv_nsec = current - monotonic_time_start;
+	//   	    		cprintf(
+	// 	"WAF IN TP BEFORE NOTRM:\n\tseconds: %d\n\tnanoseconds: %lld\n",
+	// 	tp->tv_sec,
+	// 	tp->tv_nsec
+	// );
 	    	normalize_time(tp);
+	//     	cprintf(
+	//     			"WAF IN TP AFTERRR NOTRM:\n\tseconds: %d\n\tnanoseconds: %lld\n",
+	// 	tp->tv_sec,
+	// 	tp->tv_nsec
+	// );
 	    	break;
 	    case CLOCK_PROCESS_CPUTIME_ID:
 	    	break;
 	}
-	cprintf("WTF??");
 	return 0;
 }
 
@@ -484,7 +496,7 @@ sys_clock_getres(clockid_t clock_id, struct timespec* res)
 	// if ((res = envid2env(curenv-->env_id, &env, 0)) < 0) {
 	// 	return res;
 	// }
-	if (res == NULL && check_clock_arg(clock_id)) {
+	if (res == NULL && !check_clock_arg(clock_id)) {
         return -E_INVAL;
     }
     if (clock_id != CLOCK_REALTIME) {
@@ -502,8 +514,9 @@ static int
 sys_clock_settime(clockid_t clock_id, const struct timespec* tp)
 {
     struct tm date;
+    long long current, new;
 
-	if (tp == NULL || check_clock_arg(clock_id)) {
+	if (tp == NULL || !check_clock_arg(clock_id)) {
         return -E_INVAL;
     }
 
@@ -514,7 +527,23 @@ sys_clock_settime(clockid_t clock_id, const struct timespec* tp)
             settime(&date);
             break;
         case CLOCK_MONOTONIC:
-            monotonic_time_start = tp->tv_nsec + tp->tv_sec * 1000000000;
+        cprintf("before: %lld\n", monotonic_time_start);
+	    	current = nanosec_from_timer() - monotonic_time_start;
+	    	new = tp->tv_nsec + (long long) tp->tv_sec * NANOSECONDS;
+	    		cprintf(
+		"show time spec:\n\tseconds: %d\n\tnanoseconds: %lld\n",
+		tp->tv_sec,
+		tp->tv_nsec
+	);
+	        cprintf("new: %lld %lld %lld\n",
+	        	new, (long long) tp->tv_sec * NANOSECONDS, ((long long) (tp->tv_sec * NANOSECONDS)) / NANOSECONDS);
+	//         	cprintf(
+	// 	"show time spec:\n\tseconds: %d\n\tnanoseconds: %lld\n",
+	// 	tp->tv_sec,
+	// 	tp->tv_nsec
+	// );
+	    	monotonic_time_start += (current - new);
+	        cprintf("after: %lld\n", monotonic_time_start);
             break;
         case CLOCK_PROCESS_CPUTIME_ID:
             break;

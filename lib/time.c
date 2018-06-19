@@ -87,13 +87,39 @@ void snprint_datetime(char *buf, int size, struct tm *tm)
           tm->tm_hour, tm->tm_min, tm->tm_sec);
 }
 
+int timespec_from_timestamp(int time, struct timespec* ts)
+{
+    ts->tv_sec = time;
+    ts->tv_nsec = 0;
+    return 0;
+}
 
-void _view_tc(struct timespec* tp) {
-    cprintf(
-        "show time spec:\n\tseconds: %d\n\tnanoseconds: %ld\n",
-        tp->tv_sec,
-        tp->tv_nsec
+int timespecec_from_tm(struct tm* tm, struct timespec* ts)
+{
+    return timespec_from_timestamp(
+        timestamp(tm),
+        ts
     );
+}
+
+int timestamp_from_timespec(struct timespec* ts)
+{
+    /* ts should never be in not normilezed state by convinence,
+     so we don't need to do normalixztion first 
+    */
+    return ts->tv_sec;
+}
+
+int mkdate_from_timespec(struct timespec* ts, struct tm* tm)
+{
+    /* ts should never be in not normilezed state by convinence,
+     so we don't need to do normalixztion first 
+    */
+    mktime(
+        timestamp_from_timespec(ts),
+        tm
+    );
+    return 0;
 }
 
 int clock_init(struct timespec* tp)
@@ -129,9 +155,4 @@ int clock_nanosleep(
 )
 {
     return sys_clock_nanosleep(clock_id, flags, rqtp, rmtp);
-}
-
-int dummy_clock_getres(clockid_t clock_id, struct timespec res)
-{
-    return clock_getres(clock_id, &res);
 }

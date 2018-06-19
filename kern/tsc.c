@@ -201,12 +201,12 @@ int second_from_timer(void)
 	return read_tsc() / cpu_freq / 1000;
 }
 
-int nanosec_from_timer(void)
+long long nanosec_from_timer(void)
 {
 	return (read_tsc() / cpu_freq) * 1000000;
 }
 
-int nanosec_interval(void)
+long long nanosec_interval(void)
 {
 	int fst = read_tsc() / cpu_freq;
 	int snd = read_tsc() / cpu_freq;

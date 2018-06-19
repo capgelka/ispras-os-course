@@ -95,10 +95,10 @@ void snprint_datetime(char *buf, int size, struct tm *tm)
 
 int normalize_time(struct timespec* tp)
 {   
-    int seconds = tp->tv_nsec % NANOSECONDS;
+    int seconds = tp->tv_nsec / NANOSECONDS;
     if (seconds) {
         tp->tv_sec += seconds;
-        tp->tv_nsec = (tp->tv_nsec / NANOSECONDS);
+        tp->tv_nsec = (tp->tv_nsec % NANOSECONDS);
     }
     return 0;
 }
@@ -123,7 +123,7 @@ int check_clock_arg(clockid_t cl)
 }
 
 int set_tp_from_timestamp(struct timespec* tp, int tstamp)
-{   
+{
     tp->tv_sec = (time_t) tstamp;
     tp->tv_nsec = 0;
     return 0;

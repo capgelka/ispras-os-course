@@ -8,7 +8,7 @@
 typedef uint32_t time_t;
 typedef uint8_t clockid_t;
 
-#define NANOSECONDS 1000000
+#define NANOSECONDS 1000000000
 
 struct tm
 {
@@ -23,8 +23,8 @@ struct tm
 
 struct timespec
 {
-    time_t  tv_sec;
-    long    tv_nsec;
+    time_t       tv_sec;
+    long long    tv_nsec; //it's just long in doc's but it leads tp overflows
 };
 
 
@@ -49,9 +49,13 @@ int clock_settime(clockid_t clock_id, const struct timespec *tp);
 int clock_nanosleep(clockid_t clock_id, int flags, const struct timespec
 *rqtp, struct timespec *rmtp);
 
-int dummy_clock_getres(clockid_t clock_id, struct timespec res);
-
 // int normilize_time(struct timespec* tp);
+
+int timespec_from_timestamp(int time, struct timespec* ts);
+int timespecec_from_tm(struct tm* tm, struct timespec* ts);
+int timestamp_from_timespec(struct timespec* ts);
+int mkdate_from_timespec(struct timespec* ts, struct tm* tm);
+
 
 #define CLOCK_MONOTONIC 1
 #define CLOCK_REALTIME 2
