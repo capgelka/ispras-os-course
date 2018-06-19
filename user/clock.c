@@ -24,8 +24,8 @@ void umain(int argc, char **argv) {
     clock_init(&tc);
 
     cprintf("CLOCK_MONOTONIC tests:\n");
-    // clock_getres(CLOCK_MONOTONIC, &tr);
-    // view_tc(&tr);
+    clock_getres(CLOCK_MONOTONIC, &tr);
+    view_tc(&tr);
     clock_gettime(CLOCK_MONOTONIC, &tc);
     view_tc(&tc);
     tc.tv_sec = 0;

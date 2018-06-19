@@ -1,5 +1,4 @@
 #include <inc/time.h>
-// #include <lib/syscall.h>
 #include <inc/lib.h>
 
 bool is_leap_year(int year)
@@ -108,16 +107,6 @@ int clock_init(struct timespec* tp)
 
 int clock_getres(clockid_t clock_id, struct timespec *res)
 {
-    uint32_t* addr = (uint32_t*)vsys;
-    //(struct timespec*) addr = *res;
-    cprintf("SSSS !!!!!!!>>>>");
-    addr += 100;
-    struct timespec* ts = (struct timespec*) addr;
-    _view_tc(ts);
-    _view_tc(res);
-    *ts = *res;
-    // ts = vsys;
-    cprintf("CALLLLLLLLL\n");
     return sys_clock_getres(clock_id, (struct timespec* ) res);
 }
 

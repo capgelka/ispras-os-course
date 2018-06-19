@@ -6,7 +6,6 @@ vsyscall(int num)
 {
 	// LAB 12: Your code here.
 	return vsys[num];
-    //return *((int32_t *)UVSYS + num);
 }
 
 int vsys_gettime(void)

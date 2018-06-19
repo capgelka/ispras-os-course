@@ -484,19 +484,14 @@ sys_clock_getres(clockid_t clock_id, struct timespec* res)
 	// if ((res = envid2env(curenv-->env_id, &env, 0)) < 0) {
 	// 	return res;
 	// }
-	cprintf("CALL CLOCK GETRES");
 	if (res == NULL && check_clock_arg(clock_id)) {
-		cprintf("00000000000)))))))");
         return -E_INVAL;
     }
     if (clock_id != CLOCK_REALTIME) {
-    	cprintf("!!!!!!!!!!!111111111111111111e");
-    	cprintf("%ld =======\n\n", res->tv_nsec);
         res->tv_nsec = nanosec_interval();
         res->tv_sec = 0;
     }
     else {
-    	cprintf("22222222222222222222222222222222");
         res->tv_nsec = 0;
         res->tv_sec = 1;
     }

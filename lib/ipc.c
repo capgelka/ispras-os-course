@@ -83,25 +83,6 @@ ipc_send(envid_t to_env, uint32_t val, void *pg, int perm)
 			}
 		}
 	} while(rc);
-// 	int r;
-
-// 	if (pg == NULL) {
-// 		pg = (void *) -1;
-// 	}
-
-// 	while (true) {
-// 		r = sys_ipc_try_send(to_env, val, pg, perm);
-// 		cprintf("r: %d\n", r);
-// 		if (r == 0) {
-// 			break;
-// 		}
-
-// 		if (r != -E_IPC_NOT_RECV) {
-// 			panic("ipc_send: %d", r);
-// 		}
-
-// 		sys_yield();
-// 	}
 }
 
 // Find the first environment of the given type.  We'll use this to

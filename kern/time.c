@@ -124,7 +124,6 @@ int check_clock_arg(clockid_t cl)
 
 int set_tp_from_timestamp(struct timespec* tp, int tstamp)
 {   
-    cprintf("CALL SET TP FROM TIMESTAMP %d %ld\n", tstamp, tp->tv_nsec);
     tp->tv_sec = (time_t) tstamp;
     tp->tv_nsec = 0;
     return 0;

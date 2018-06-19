@@ -80,6 +80,7 @@ duppage(envid_t envid, unsigned pn)
 	// LAB 9: Your code here.
 	void* va = (void *) (pn * PGSIZE);
 	int perm = uvpt[pn] & PTE_SYSCALL;
+    
 	if (!(perm & PTE_SHARE) && ((perm & PTE_W) || (perm & PTE_COW))) {
 		perm &= ~PTE_W;
 		perm |= PTE_COW;
