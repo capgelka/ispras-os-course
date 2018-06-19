@@ -23,12 +23,12 @@ read_clock(struct tm* date)
 int
 settime(struct tm* date)
 {
-    mc146818_write(RTC_SEC, date->tm_sec);
-    mc146818_write(RTC_MIN, date->tm_min);
-    mc146818_write(RTC_HOUR, date->tm_hour);
-    mc146818_write(RTC_DAY, date->tm_mday);
-    mc146818_write(RTC_MON, date->tm_mon + 1);
-    mc146818_write(RTC_YEAR, date->tm_year);
+    mc146818_write(RTC_SEC, BIN2BCD(date->tm_sec));
+    mc146818_write(RTC_MIN, BIN2BCD(date->tm_min));
+    mc146818_write(RTC_HOUR, BIN2BCD(date->tm_hour));
+    mc146818_write(RTC_DAY, BIN2BCD(date->tm_mday));
+    mc146818_write(RTC_MON, BIN2BCD(date->tm_mon + 1));
+    mc146818_write(RTC_YEAR, BIN2BCD(date->tm_year));
 
     return 0;
 }

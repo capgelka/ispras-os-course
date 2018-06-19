@@ -524,26 +524,13 @@ sys_clock_settime(clockid_t clock_id, const struct timespec* tp)
 
         case CLOCK_REALTIME:
 	        mktime(tp->tv_sec, &date);
+	        print_datetime(&date);
             settime(&date);
             break;
         case CLOCK_MONOTONIC:
-        cprintf("before: %lld\n", monotonic_time_start);
 	    	current = nanosec_from_timer() - monotonic_time_start;
 	    	new = tp->tv_nsec + (long long) tp->tv_sec * NANOSECONDS;
-	    		cprintf(
-		"show time spec:\n\tseconds: %d\n\tnanoseconds: %lld\n",
-		tp->tv_sec,
-		tp->tv_nsec
-	);
-	        cprintf("new: %lld %lld %lld\n",
-	        	new, (long long) tp->tv_sec * NANOSECONDS, ((long long) (tp->tv_sec * NANOSECONDS)) / NANOSECONDS);
-	//         	cprintf(
-	// 	"show time spec:\n\tseconds: %d\n\tnanoseconds: %lld\n",
-	// 	tp->tv_sec,
-	// 	tp->tv_nsec
-	// );
 	    	monotonic_time_start += (current - new);
-	        cprintf("after: %lld\n", monotonic_time_start);
             break;
         case CLOCK_PROCESS_CPUTIME_ID:
             break;
