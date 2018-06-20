@@ -7,7 +7,8 @@
 // #define CLOCK_REALTIME 2
 // #define CLOCK_PROCESS_CPUTIME_ID 3
 
-void view_tc(struct timespec* tp) {
+void view_tc(struct timespec* tp)
+{
 	cprintf(
 		"show time spec:\n\tseconds: %d\n\tnanoseconds: %lld\n",
 		tp->tv_sec,
@@ -15,13 +16,20 @@ void view_tc(struct timespec* tp) {
 	);
 }
 
-void umain(int argc, char **argv) {
+void view_date(struct timespec* tp)
+{
+    struct tm date;
+    mkdate_from_timespec(tp, &date);
+    print_datetime(&date);
+}
+
+void umain(int argc, char **argv)
+{
     char time[20];
 
     struct timespec tr;
     struct timespec tc;
     struct timespec tc2;
-    struct tm date;
 
     clock_init(&tr);
     clock_init(&tc);
@@ -59,14 +67,23 @@ void umain(int argc, char **argv) {
     cprintf("actual real time");
     clock_gettime(CLOCK_REALTIME, &tc);
     view_tc(&tc);
-    tm = { 8, 57, 20, 25, 8, 1991 };
-    tc2.tv_sec = timestamp(tm);
+    struct tm date = {
+        .tm_sec = 8,
+        .tm_min = 57,
+        .tm_hour = 20,
+        .tm_mday = 25,
+        .tm_mon = 8,
+        .tm_year = 21
+    };
+    tc2.tv_sec = timestamp(&date);
 
-    cprintf("Change seconds to 5. actual real time should have 5 secs\n");
+    cprintf("Change timestamp to linux birthday. actual real time should be the same\n");
     assert(!clock_settime(CLOCK_REALTIME, &tc2));
     clock_gettime(CLOCK_REALTIME, &tc);
+    view_date(&tc);
 
     view_tc(&tc);
+    assert(tc.tv_sec == tc2.tv_sec);
 
 
     cprintf("CLOCK_REALTIME tests:\n");

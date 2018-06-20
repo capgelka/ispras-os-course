@@ -524,11 +524,6 @@ sys_clock_settime(clockid_t clock_id, const struct timespec* tp)
 
         case CLOCK_REALTIME:
 	        mktime(tp->tv_sec, &date);
-	        print_datetime(&date);
-	        // if (date->year < 2000) {
-	        // 	// can't set time earlier than 2000
-	        // 	return -E_INVAL
-	        // }
             settime(&date);
             break;
         case CLOCK_MONOTONIC:
