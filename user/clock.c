@@ -21,6 +21,7 @@ void umain(int argc, char **argv) {
     struct timespec tr;
     struct timespec tc;
     struct timespec tc2;
+    struct tm date;
 
     clock_init(&tr);
     clock_init(&tc);
@@ -58,8 +59,8 @@ void umain(int argc, char **argv) {
     cprintf("actual real time");
     clock_gettime(CLOCK_REALTIME, &tc);
     view_tc(&tc);
-    tc2.tv_sec = 10000000;
-
+    tm = { 8, 57, 20, 25, 8, 1991 };
+    tc2.tv_sec = timestamp(tm);
 
     cprintf("Change seconds to 5. actual real time should have 5 secs\n");
     assert(!clock_settime(CLOCK_REALTIME, &tc2));
