@@ -20,7 +20,7 @@ int d_to_s(int d)
 int timestamp(struct tm *time)
 {
     int result = 0, year, month;
-    for (year = 1970; year < time->tm_year + 2000; year++)
+    for (year = 1970; year < time->tm_year + 1970; year++)
     {
         result += d_to_s(365 + is_leap_year(year));
     }

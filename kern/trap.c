@@ -178,6 +178,7 @@ clock_idt_init(void)
 	SETGATE(idt[IRQ_OFFSET + IRQ_CLOCK], 0, GD_KT, (int)(&clock_thdlr), 0);
 	lidt(&idt_pd);
 
+	patch_year(); // for time from 1970
 	vsys[VSYS_gettime] = gettime();
 	monotonic_time_start = nanosec_from_timer();
 	//monotonic_time_current = monotonic_time_start;

@@ -20,28 +20,34 @@ read_clock(struct tm* date)
     return 0;
 }
 
+int patch_year()
+{
+    nmi_disable();
+    mc146818_write(
+        RTC_YEAR,
+        BIN2BCD(
+            BCD2BIN(mc146818_read(RTC_YEAR))
+        ) + BIN2BCD(30)
+    );
+
+    nmi_enable();
+    return 0;
+}
+
 int
 settime(struct tm* date)
 {
 
     nmi_disable();
-    cprintf("seconds to set %d\n", date->tm_sec);
+
     mc146818_write(RTC_SEC, BIN2BCD(date->tm_sec));
-    cprintf("actual seconds: %d\n", BCD2BIN(mc146818_read(RTC_SEC)));
     mc146818_write(RTC_MIN, BIN2BCD(date->tm_min));
     mc146818_write(RTC_HOUR, BIN2BCD(date->tm_hour));
-        cprintf("days to set %d\n", date->tm_mday);
     mc146818_write(RTC_DAY, BIN2BCD(date->tm_mday));
-        cprintf("actual days: %d\n", BCD2BIN(mc146818_read(RTC_DAY)));
     mc146818_write(RTC_MON, BIN2BCD(date->tm_mon) + 1);
-    for (int i = -100;i < 105; i++) {
-        cprintf("======== %d\n", i);
-        date->tm_year = i;
-        cprintf("years to set %d\n", date->tm_year);
-        cprintf("%d %d\n",date->tm_year, BIN2BCD(date->tm_year));
-        mc146818_write(RTC_YEAR, BIN2BCD(date->tm_year));
-        cprintf("actual years: %d\n", BCD2BIN(mc146818_read(RTC_YEAR)));
-    }
+    mc146818_write(RTC_YEAR, BIN2BCD(date->tm_year - 70));
+
+
     nmi_enable();
     return 0;
 }

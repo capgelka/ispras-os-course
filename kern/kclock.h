@@ -58,8 +58,9 @@ void mc146818_write(unsigned reg, unsigned datum);
 
 int gettime(void);
 int settime(struct tm* date);
+int patch_year();
 
 #define BCD2BIN(bcd) ((((bcd)&15) + ((bcd)>>4)*10))
-#define BIN2BCD(bcd) (((bcd / 10) << 4) | (bcd % 10))
+#define BIN2BCD(bcd) ((((bcd) / 10) << 4) | ((bcd) % 10))
 
 #endif	// !JOS_KERN_KCLOCK_H
