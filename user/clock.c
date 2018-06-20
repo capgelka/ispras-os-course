@@ -58,7 +58,7 @@ void umain(int argc, char **argv) {
     cprintf("actual real time");
     clock_gettime(CLOCK_REALTIME, &tc);
     view_tc(&tc);
-    tc2.tv_sec = 1000000000;
+    tc2.tv_sec = 10000000;
     cprintf("Change seconds to 5. actual real time should have 5 secs\n");
     assert(!clock_settime(CLOCK_REALTIME, &tc2));
     clock_gettime(CLOCK_REALTIME, &tc);
