@@ -23,7 +23,6 @@
 #endif
 
 long long monotonic_time_start;
-// time_t monotonic_time_current;
 
 static struct Taskstate ts;
 
@@ -181,7 +180,6 @@ clock_idt_init(void)
 	patch_year(); // for time from 1970
 	vsys[VSYS_gettime] = gettime();
 	monotonic_time_start = nanosec_from_timer();
-	//monotonic_time_current = monotonic_time_start;
 }
 
 
@@ -344,8 +342,11 @@ trap(struct Trapframe *tf)
 	// If we made it to this point, then no other environment was
 	// scheduled, so we should return to the current environment
 	// if doing so makes sense.
-	if (curenv && curenv->env_status == ENV_RUNNING)
+	if (curenv && curenv->env_status == ENV_RUNNING) {
+		curenv->env_time.tv_nsec += nanosec_from_timer() - curenv->env_time_start;
+		normalize_time(&curenv->env_time);
 		env_run(curenv);
+	}
 	else
 		sched_yield();
 }

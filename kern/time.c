@@ -100,6 +100,10 @@ int normalize_time(struct timespec* tp)
         tp->tv_sec += seconds;
         tp->tv_nsec = (tp->tv_nsec % NANOSECONDS);
     }
+    if (tp->tv_nsec < 0) {
+        tp->tv_sec--;
+        tp->tv_nsec += NANOSECONDS;
+    }
     return 0;
 }
 
