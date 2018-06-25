@@ -467,11 +467,9 @@ sys_clock_gettime(clockid_t clock_id, struct timespec* tp)
 	    	normalize_time(tp);
 	    	break;
 	    case CLOCK_PROCESS_CPUTIME_ID:
-	    	cprintf("ENV TIME START: %lld\n", curenv->env_time_start);
 	    	tp->tv_sec = curenv->env_time.tv_sec;
 	    	tp->tv_nsec = curenv->env_time.tv_nsec;
 	    	tp->tv_nsec += nanosec_from_timer() - curenv->env_time_start;
-	    	cprintf("&&&@@@ %lld  %lld\n", nanosec_from_timer(), curenv->env_time_start);
 			normalize_time(tp);
 	    	break;
 	}
@@ -496,14 +494,14 @@ sys_clock_getres(clockid_t clock_id, struct timespec* res)
     return 0;
 }
 
-void view_tc(struct timespec* tp)
-{
-	cprintf(
-		"show time spec:\n\tseconds: %d\n\tnanoseconds: %lld\n",
-		tp->tv_sec,
-		tp->tv_nsec
-	);
-}
+// void view_tc(struct timespec* tp)
+// {
+// 	cprintf(
+// 		"show time spec:\n\tseconds: %d\n\tnanoseconds: %lld\n",
+// 		tp->tv_sec,
+// 		tp->tv_nsec
+// 	);
+// }
 
 static int
 sys_clock_settime(clockid_t clock_id, const struct timespec* tp)
@@ -528,20 +526,14 @@ sys_clock_settime(clockid_t clock_id, const struct timespec* tp)
 	    	monotonic_time_start += (current - new);
             break;
         case CLOCK_PROCESS_CPUTIME_ID:
-        	cprintf("STAAAAAAAAAAAAAAAAAAAAART\n");
 	    	current = (
 	    		nanosec_from_timer() -
 	    		curenv->env_time_start +
 	    		(long long) curenv->env_time.tv_sec * NANOSECONDS +
 	    		curenv->env_time.tv_nsec
 	    	);
-	    	cprintf("CURRENT: %lld\n", current);
 	    	new = tp->tv_nsec + (long long) (tp->tv_sec * NANOSECONDS);
-	    	cprintf("NEW: %lld\n", new);
-	    	cprintf("ENV TIME START: %lld\n", curenv->env_time_start);
 	    	curenv->env_time_start += (current - new);
-	    	//clock_init(&curenv->env_time);
-			cprintf("EEEEEEEEEEEEEEENNNNNNDDDDD %lld \n", curenv->env_time_start);
             break;
     }
 
