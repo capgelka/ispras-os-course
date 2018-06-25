@@ -562,11 +562,25 @@ sys_clock_nanosleep(
 	        } else {
 	        	curenv->env_sleep_until = gettime() + timestamp_from_timespec(rqtp);
 	        }
+	        curenv->env_status = ENV_NOT_RUNNABLE;
+	        sched_yield();
             break;
         case CLOCK_MONOTONIC:
-	    	// current = nanosec_from_timer() - monotonic_time_start;
-	    	// new = tp->tv_nsec + (long long) tp->tv_sec * NANOSECONDS;
-	    	// monotonic_time_start += (current - new);
+        	curenv->env_sleep_clock_type = CLOCK_MONOTONIC;
+	        if (flags == TIMER_ABSTIME) {
+	        	curenv->env_sleep_until = (
+	        		rqtp->tv_nsec + (long long) rqtp->tv_sec * NANOSECONDS
+	        	);
+	        } else {
+	        	curenv->env_sleep_until = (
+	        		nanosec_from_timer() + 
+	        		rqtp->tv_nsec +
+	        		(long long) rqtp->tv_sec * NANOSECONDS
+	        	);
+	        }
+	        //cprintf("going to sleep\n");
+	        curenv->env_status = ENV_NOT_RUNNABLE;
+	        sched_yield();
             break;
         case CLOCK_PROCESS_CPUTIME_ID:
         	return -E_INVAL;

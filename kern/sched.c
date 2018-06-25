@@ -13,6 +13,7 @@
 struct Taskstate cpu_ts;
 void sched_halt(void);
 
+
 // Choose a user environment to run and run it.
 void
 sched_yield(void)
@@ -31,19 +32,41 @@ sched_yield(void)
 	// simply drop through to the code
 	// below to halt the cpu.
 
-// 	int8_t status = rtc_check_status();
-// 	cprintf("status: %d\n", status);
-// //	panic("NOOO");
-// 	pic_send_eoi(8);
-	//pic_send_eoi(status);
-
 	//LAB 3: Your code here.
-	//sched_halt();
 	// debug_mem();
 	// show_env(curenv);
-	cprintf("SCHED update\n");
-	curenv->env_time.tv_nsec += nanosec_from_timer() - curenv->env_time_start;
+	int sleeping_process_exists;
+	long long monotonic_time = nanosec_from_timer();
+	curenv->env_time.tv_nsec += monotonic_time - curenv->env_time_start;
 	normalize_time(&curenv->env_time);
+
+	// check if we need to wakeup sleeping process
+	time_t current_time = gettime();
+
+
+repeat: // we don't want to halt while have some sleeping processes
+ 	sleeping_process_exists = 0;
+	for (int i = 0;  i < NENV; i++) {
+		if (envs[i].env_status == ENV_NOT_RUNNABLE && envs[i].env_sleep_clock_type) {
+			sleeping_process_exists = 1;
+			switch(envs[i].env_sleep_clock_type) {
+				case CLOCK_REALTIME:
+					if (current_time > envs[i].env_sleep_until) {
+						envs[i].env_sleep_clock_type = 0;
+						envs[i].env_status = ENV_RUNNABLE;
+					}
+					break;
+				case CLOCK_MONOTONIC:
+					if (monotonic_time > envs[i].env_sleep_until) {
+
+						envs[i].env_sleep_clock_type = 0;
+						envs[i].env_status = ENV_RUNNABLE;
+					}
+					break;
+			}
+		}
+	}
+
 	struct Env* next_env = NULL;
 	int curr = (int) (curenv - envs);
 	for (int i = curr; i < NENV; i++) {
@@ -68,6 +91,12 @@ run_env:
 	if (next_env) {
 		// show_env(next_env);
 		env_run(next_env);
+	}
+	if (sleeping_process_exists) {
+		monotonic_time = nanosec_from_timer();
+		current_time = gettime();
+		goto repeat;
+
 	}
 	// sched_halt never returns
 	sched_halt();

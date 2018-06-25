@@ -66,10 +66,12 @@ struct Env {
 	uint32_t env_ipc_value;		// Data value sent to us
 	envid_t env_ipc_from;		// envid of the sender
 	int env_ipc_perm;		// Perm of page mapping received
+
+	//  Individual task
 	struct timespec env_time; // amount of time process has been running
 	long long env_time_start; // moment environment start running again
-	long long env_sleep_until; //amount of time remained to sleep
-	int env_sleep_clock_type; //clock type for env_sleep_remain field
+	long long env_sleep_until; // monemnt of time to wake up
+	int env_sleep_clock_type; //clock type for env_sleep_until field
 };
 
 #endif // !JOS_INC_ENV_H

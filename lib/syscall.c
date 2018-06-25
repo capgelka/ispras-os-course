@@ -146,7 +146,7 @@ int sys_clock_nanosleep(
 {
 	return syscall(
 		SYS_clock_nanosleep,
-		1,
+		0,
 		clock_id,
 		flags,
 		(uint32_t) rqtp,

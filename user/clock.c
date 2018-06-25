@@ -3,9 +3,6 @@
 #include <inc/stdio.h>
 #include <inc/lib.h>
 
-// #define CLOCK_MONOTONIC 1
-// #define CLOCK_REALTIME 2
-// #define CLOCK_PROCESS_CPUTIME_ID 3
 
 void view_tc(struct timespec* tp)
 {
@@ -129,6 +126,69 @@ void umain(int argc, char **argv)
     assert(tc.tv_sec == tc2.tv_sec);
 
 
+/////////
+    clock_init(&tr);
+    clock_init(&tc);
+    clock_init(&tc2);
+    cprintf("clock_nanosleep tests:\n");
+    cprintf("test 1 (abstime monotonic)\n");
+
+    clock_gettime(CLOCK_MONOTONIC, &tc);
+    view_tc(&tc);
+    tc.tv_sec += 2;
+    cprintf("sleep for 2 seconds\n");
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &tc, NULL);
+    clock_gettime(CLOCK_MONOTONIC, &tc2);
+    view_tc(&tc2);
+    assert((tc2.tv_sec - tc.tv_sec) >= 0);
+    assert((tc2.tv_sec - tc.tv_sec) <= 1);
+////
+
+    cprintf("test 2 (relative time monotonic)\n");
+    clock_init(&tc);
+    clock_init(&tc2);
+
+    clock_gettime(CLOCK_MONOTONIC, &tc);
+    view_tc(&tc);
+    tr.tv_sec = 2;
+    cprintf("sleep for 2 seconds\n");
+    clock_nanosleep(CLOCK_MONOTONIC, 0, &tr, NULL);
+    clock_gettime(CLOCK_MONOTONIC, &tc2);
+    view_tc(&tc2);
+    assert((tc2.tv_sec - tc.tv_sec) >= 2);
+    assert((tc2.tv_sec - tc.tv_sec) <= 3);
+////
+
+    clock_init(&tr);
+    clock_init(&tc);
+    clock_init(&tc2);
+    cprintf("test 3 (abstime realtime)\n");
+
+    clock_gettime(CLOCK_REALTIME, &tc);
+    view_tc(&tc);
+    tc.tv_sec += 2;
+    cprintf("sleep for 2 seconds\n");
+    clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &tc, NULL);
+    clock_gettime(CLOCK_REALTIME, &tc2);
+    view_tc(&tc2);
+    assert((tc2.tv_sec - tc.tv_sec) >= 0);
+    assert((tc2.tv_sec - tc.tv_sec) <= 1);
+
+////
+
+    cprintf("test 4 (relative time realtime)\n");
+    clock_init(&tc);
+    clock_init(&tc2);
+
+    clock_gettime(CLOCK_REALTIME, &tc);
+    view_tc(&tc);
+    tr.tv_sec = 2;
+    cprintf("sleep for 2 seconds\n");
+    clock_nanosleep(CLOCK_REALTIME, 0, &tr, NULL);
+    clock_gettime(CLOCK_REALTIME, &tc2);
+    view_tc(&tc2);
+    assert((tc2.tv_sec - tc.tv_sec) >= 2);
+    assert((tc2.tv_sec - tc.tv_sec) <= 3);
 
     // int now = sys_gettime();
     // struct tm tnow;
