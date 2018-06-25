@@ -549,6 +549,9 @@ sys_clock_nanosleep(
 )
 {
 
+	long long current_ns, rq_nanoseconds;
+	time_t rq_timestamp, current_ts;
+
 	if (rqtp == NULL || !check_clock_arg(clock_id)) {
         return -E_INVAL;
     }
@@ -556,37 +559,39 @@ sys_clock_nanosleep(
 	switch(clock_id) {
 
         case CLOCK_REALTIME:
+	        current_ts = gettime();
+	        rq_timestamp = timestamp_from_timespec(rqtp);
+	        if (flags == TIMER_ABSTIME) {
+	        	if (current_ts >= rq_timestamp) {
+	        		return 0;
+	        	}
+	        	curenv->env_sleep_until = rq_timestamp;
+	        } else {
+	        	curenv->env_sleep_until = current_ts + rq_timestamp;
+	        }
 	        curenv->env_sleep_clock_type = CLOCK_REALTIME;
-	        if (flags == TIMER_ABSTIME) {
-	        	curenv->env_sleep_until = timestamp_from_timespec(rqtp);
-	        } else {
-	        	curenv->env_sleep_until = gettime() + timestamp_from_timespec(rqtp);
-	        }
 	        curenv->env_status = ENV_NOT_RUNNABLE;
 	        sched_yield();
-            break;
         case CLOCK_MONOTONIC:
-        	curenv->env_sleep_clock_type = CLOCK_MONOTONIC;
+        	current_ns = nanosec_from_timer();
+	        rq_nanoseconds = (
+        		rqtp->tv_nsec +
+        		(long long) rqtp->tv_sec * NANOSECONDS
+	        );
 	        if (flags == TIMER_ABSTIME) {
-	        	curenv->env_sleep_until = (
-	        		rqtp->tv_nsec + (long long) rqtp->tv_sec * NANOSECONDS
-	        	);
+	        	if (current_ns >= rq_nanoseconds) {
+	        		return 0;
+	        	}
+	        	curenv->env_sleep_until = rq_nanoseconds;
 	        } else {
-	        	curenv->env_sleep_until = (
-	        		nanosec_from_timer() + 
-	        		rqtp->tv_nsec +
-	        		(long long) rqtp->tv_sec * NANOSECONDS
-	        	);
+	        	curenv->env_sleep_until = rq_nanoseconds + current_ns;
 	        }
-	        //cprintf("going to sleep\n");
+        	curenv->env_sleep_clock_type = CLOCK_MONOTONIC;
 	        curenv->env_status = ENV_NOT_RUNNABLE;
 	        sched_yield();
-            break;
         case CLOCK_PROCESS_CPUTIME_ID:
-        	return -E_INVAL;
-            break;
+        	return -E_NOT_SUPP;
     }
-
 
 	return 0;
 }

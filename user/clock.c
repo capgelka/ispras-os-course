@@ -190,6 +190,17 @@ void umain(int argc, char **argv)
     assert((tc2.tv_sec - tc.tv_sec) >= 2);
     assert((tc2.tv_sec - tc.tv_sec) <= 3);
 
+
+    cprintf("test 5 (error handling)\n");
+    assert(clock_nanosleep(CLOCK_REALTIME, 0, 0, NULL) == -E_INVAL);
+    cprintf("NULL TEST OK\n");
+    assert(clock_nanosleep(CLOCK_PROCESS_CPUTIME_ID, 0, &tc, NULL) == -E_NOT_SUPP);
+    cprintf("BAD CLOCK TEST OK\n");
+    clock_gettime(CLOCK_REALTIME, &tc);
+    tc.tv_sec--;
+    assert(clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &tc, NULL) == 0);
+    cprintf("ELAPSED TIME TEST OK\n");
+
     // int now = sys_gettime();
     // struct tm tnow;
 
