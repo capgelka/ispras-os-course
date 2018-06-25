@@ -9,6 +9,7 @@ typedef uint32_t time_t;
 typedef uint8_t clockid_t;
 
 #define NANOSECONDS 1000000000
+#define ENABLE_POSIX_SETTIME_RESTRICTION 1
 
 struct tm
 {
@@ -39,7 +40,6 @@ void mktime(int time, struct tm *tm);
 void print_datetime(struct tm *tm);
 
 void snprint_datetime(char *buf, int size, struct tm *tm);
-
 
 int clock_init(struct timespec* tp);
 

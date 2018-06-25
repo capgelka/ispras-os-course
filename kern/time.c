@@ -92,7 +92,7 @@ void snprint_datetime(char *buf, int size, struct tm *tm)
 }
 
 int normalize_time(struct timespec* tp)
-{   
+{
     int seconds = tp->tv_nsec / NANOSECONDS;
     if (seconds) {
         tp->tv_sec += seconds;
@@ -105,7 +105,6 @@ int normalize_time(struct timespec* tp)
     return 0;
 }
 
-
 int clock_init(struct timespec* tp)
 {   
     tp->tv_sec = 0;
@@ -113,7 +112,6 @@ int clock_init(struct timespec* tp)
 
     return 0;
 }
-
 
 int check_clock_arg(clockid_t cl)
 {
@@ -152,5 +150,31 @@ int clock_getres(clockid_t clock_id, struct timespec* res)
         res->tv_nsec = 0;
         res->tv_sec = 1;
     }
+    return 0;
+}
+
+struct timespec* resolution_by_clock(clockid_t clock_id)
+{
+    if (!(clock_id == CLOCK_REALTIME || CLOCK_MONOTONIC || CLOCK_PROCESS_CPUTIME_ID)) {
+        return NULL;
+    }
+    if (clock_id != CLOCK_REALTIME) {
+        return (struct timespec*) vsys + VSYS_CLOCK_MONOTONIC;
+    }
+    else {
+        return (struct timespec*) vsys + VSYS_CLOCK_REALTIME;
+    }
+}
+
+
+int allign_by_resolution(struct timespec* tp, struct timespec* res)
+{
+    long long spec_nanoseconds, res_nanoseconds;
+    spec_nanoseconds = tp->tv_nsec + (long long) tp->tv_sec * NANOSECONDS;
+    res_nanoseconds = res->tv_nsec + (long long) res->tv_sec * NANOSECONDS;
+    spec_nanoseconds = (spec_nanoseconds / res_nanoseconds) * res_nanoseconds;
+    tp->tv_nsec = spec_nanoseconds;
+    tp->tv_sec = 0;
+    normalize_time(tp);
     return 0;
 }

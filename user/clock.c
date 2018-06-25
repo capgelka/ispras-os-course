@@ -22,7 +22,6 @@ void view_date(struct timespec* tp)
 
 void umain(int argc, char **argv)
 {
-    // char time[20];
 
     struct timespec tr;
     struct timespec tc;
@@ -45,12 +44,16 @@ void umain(int argc, char **argv)
     clock_gettime(CLOCK_MONOTONIC, &tc);
     cprintf("actual monotonic time");
     view_tc(&tc);
+
     tc2.tv_sec = 5;
+#if ENABLE_POSIX_SETTIME_RESTRICTION
+    cprintf("Change seconds to 5. Should return an error\n");
+    assert(clock_settime(CLOCK_MONOTONIC, &tc2) == -E_INVAL);
+#else
     cprintf("Change seconds to 5. actual monotonic time should have 5 secs\n");
     assert(!clock_settime(CLOCK_MONOTONIC, &tc2));
     clock_gettime(CLOCK_MONOTONIC, &tc);
     assert(tc.tv_sec == 5);
-    // sys_yield();
     view_tc(&tc);
 
     tc2.tv_sec = 2;
@@ -58,8 +61,8 @@ void umain(int argc, char **argv)
     assert(!clock_settime(CLOCK_MONOTONIC, &tc2));
     clock_gettime(CLOCK_MONOTONIC, &tc);
     assert(tc.tv_sec == 2);
-    // sys_yield();
     view_tc(&tc);
+#endif
 
     clock_init(&tr);
     clock_init(&tc);
@@ -103,12 +106,7 @@ void umain(int argc, char **argv)
     assert(tr.tv_nsec == vsys_clock_getres(CLOCK_PROCESS_CPUTIME_ID)->tv_nsec);
     assert(tr.tv_sec == vsys_clock_getres(CLOCK_PROCESS_CPUTIME_ID)->tv_sec);
 
-    // int r;
 
-    // for (int i = 0; i< 100; i++) {
-    //     if ((r = spawnl("hello", "hello", 0)) < 0)
-    //         panic("spawnl(init) failed: %i", r);
-    // }
     for (int i = 0; i< 100000000; i++) {
         tc2.tv_nsec = i*i*i;
     }
@@ -147,6 +145,7 @@ void umain(int argc, char **argv)
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &tc, NULL);
     clock_gettime(CLOCK_MONOTONIC, &tc2);
     view_tc(&tc2);
+    view_tc(&tc);
     assert((tc2.tv_sec - tc.tv_sec) >= 0);
     assert((tc2.tv_sec - tc.tv_sec) <= 1);
 ////
@@ -208,11 +207,4 @@ void umain(int argc, char **argv)
     assert(clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &tc, NULL) == 0);
     cprintf("ELAPSED TIME TEST OK\n");
 
-    // int now = sys_gettime();
-    // struct tm tnow;
-
-    // mktime(now, &tnow);
-
-    // snprint_datetime(time, 20, &tnow);
-    // cprintf("DATE: %s (%d)\n", time, now);
 }

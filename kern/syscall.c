@@ -494,15 +494,6 @@ sys_clock_getres(clockid_t clock_id, struct timespec* res)
     return 0;
 }
 
-// void view_tc(struct timespec* tp)
-// {
-// 	cprintf(
-// 		"show time spec:\n\tseconds: %d\n\tnanoseconds: %lld\n",
-// 		tp->tv_sec,
-// 		tp->tv_nsec
-// 	);
-// }
-
 static int
 sys_clock_settime(clockid_t clock_id, const struct timespec* tp)
 {	
@@ -514,17 +505,29 @@ sys_clock_settime(clockid_t clock_id, const struct timespec* tp)
         return -E_INVAL;
     }
 
+    struct timespec* res = resolution_by_clock(clock_id);
+    // we need to allign timespec but changin the original seemed to be bad idea
+    struct timespec ts;
+   	ts.tv_sec = tp->tv_sec;
+   	ts.tv_nsec = tp->tv_nsec;
+    allign_by_resolution(&ts, res);
+
     switch(clock_id) {
 
         case CLOCK_REALTIME:
-	        mktime(tp->tv_sec, &date);
+	        mktime(ts.tv_sec, &date);
             settime(&date);
             break;
         case CLOCK_MONOTONIC:
-	    	current = nanosec_from_timer() - monotonic_time_start;
-	    	new = tp->tv_nsec + (long long) tp->tv_sec * NANOSECONDS;
+#if ENABLE_POSIX_SETTIME_RESTRICTION
+            return -E_INVAL;
+
+#else
+          	current = nanosec_from_timer() - monotonic_time_start;
+	    	new = ts.tv_nsec + (long long) ts.tv_sec * NANOSECONDS;
 	    	monotonic_time_start += (current - new);
             break;
+#endif
         case CLOCK_PROCESS_CPUTIME_ID:
 	    	current = (
 	    		nanosec_from_timer() -
@@ -532,7 +535,7 @@ sys_clock_settime(clockid_t clock_id, const struct timespec* tp)
 	    		(long long) curenv->env_time.tv_sec * NANOSECONDS +
 	    		curenv->env_time.tv_nsec
 	    	);
-	    	new = tp->tv_nsec + (long long) (tp->tv_sec * NANOSECONDS);
+	    	new = ts.tv_nsec + (long long) (ts.tv_sec * NANOSECONDS);
 	    	curenv->env_time_start += (current - new);
             break;
     }
@@ -573,7 +576,7 @@ sys_clock_nanosleep(
 	        curenv->env_status = ENV_NOT_RUNNABLE;
 	        sched_yield();
         case CLOCK_MONOTONIC:
-        	current_ns = nanosec_from_timer();
+        	current_ns = nanosec_from_timer() - monotonic_time_start;
 	        rq_nanoseconds = (
         		rqtp->tv_nsec +
         		(long long) rqtp->tv_sec * NANOSECONDS

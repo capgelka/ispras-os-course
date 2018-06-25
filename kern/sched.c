@@ -36,8 +36,8 @@ sched_yield(void)
 	// debug_mem();
 	// show_env(curenv);
 	int sleeping_process_exists = 0;
-	long long monotonic_time = nanosec_from_timer();
-	curenv->env_time.tv_nsec += monotonic_time - curenv->env_time_start;
+	long long monotonic_time = nanosec_from_timer() - monotonic_time_start;
+	curenv->env_time.tv_nsec += nanosec_from_timer() - curenv->env_time_start;
 	normalize_time(&curenv->env_time);
 
 	// check if we need to wakeup sleeping process
@@ -93,7 +93,7 @@ run_env:
 			env_run(next_env);
 		}
 		if (sleeping_process_exists) {
-			monotonic_time = nanosec_from_timer();
+			monotonic_time = nanosec_from_timer() - monotonic_time_start;
 			current_time = gettime();
 		}
 	
