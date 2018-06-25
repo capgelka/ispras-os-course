@@ -179,6 +179,8 @@ clock_idt_init(void)
 
 	patch_year(); // for time from 1970
 	vsys[VSYS_gettime] = gettime();
+	clock_getres(CLOCK_MONOTONIC, (struct timespec*) vsys + VSYS_CLOCK_MONOTONIC);
+	clock_getres(CLOCK_REALTIME, (struct timespec*) vsys + VSYS_CLOCK_REALTIME);
 	monotonic_time_start = nanosec_from_timer();
 }
 

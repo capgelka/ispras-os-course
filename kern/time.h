@@ -14,4 +14,6 @@ int check_clock_arg(clockid_t cl);
 
 int set_tp_from_timestamp(struct timespec* tp, int tstamp);
 
+int clock_getres(clockid_t clock_id, struct timespec* res);
+
 #endif // !JOS_KERN_TIME_H

@@ -63,6 +63,8 @@ int	sys_ipc_recv(void *rcv_pg);
 int sys_gettime(void);
 
 int vsys_gettime(void);
+struct timespec* vsys_clock_getres(clockid_t);
+
 int sys_clock_gettime(clockid_t clock_id, struct timespec* tp);
 int sys_clock_getres(clockid_t clock_id, struct timespec* res);
 

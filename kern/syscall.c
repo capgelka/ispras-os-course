@@ -480,7 +480,7 @@ static int
 sys_clock_getres(clockid_t clock_id, struct timespec* res)
 {
 
-	if (res == NULL && !check_clock_arg(clock_id)) {
+	if (res == NULL || !check_clock_arg(clock_id)) {
         return -E_INVAL;
     }
     if (clock_id != CLOCK_REALTIME) {

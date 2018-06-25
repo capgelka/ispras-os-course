@@ -37,6 +37,9 @@ void umain(int argc, char **argv)
     cprintf("\n====test clock_getres====\n");
     clock_getres(CLOCK_MONOTONIC, &tr);
     view_tc(&tr);
+    view_tc(vsys_clock_getres(CLOCK_MONOTONIC));
+    assert(tr.tv_nsec == vsys_clock_getres(CLOCK_MONOTONIC)->tv_nsec);
+    assert(tr.tv_sec == vsys_clock_getres(CLOCK_MONOTONIC)->tv_sec);
 
     cprintf("\n====test clock_gettime/clock_settime====\n");
     clock_gettime(CLOCK_MONOTONIC, &tc);
@@ -67,6 +70,8 @@ void umain(int argc, char **argv)
     cprintf("\n====test clock_getres====\n");
     clock_getres(CLOCK_REALTIME, &tr);
     view_tc(&tr);
+    assert(tr.tv_nsec == vsys_clock_getres(CLOCK_REALTIME)->tv_nsec);
+    assert(tr.tv_sec == vsys_clock_getres(CLOCK_REALTIME)->tv_sec);
 
     cprintf("\n====test clock_gettime/clock_settime====\n");
     cprintf("actual real time");
@@ -95,6 +100,8 @@ void umain(int argc, char **argv)
     cprintf("\n====test clock_getres====\n");
     clock_getres(CLOCK_PROCESS_CPUTIME_ID, &tr);
     view_tc(&tr);
+    assert(tr.tv_nsec == vsys_clock_getres(CLOCK_PROCESS_CPUTIME_ID)->tv_nsec);
+    assert(tr.tv_sec == vsys_clock_getres(CLOCK_PROCESS_CPUTIME_ID)->tv_sec);
 
     // int r;
 

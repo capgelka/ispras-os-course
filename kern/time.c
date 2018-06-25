@@ -1,6 +1,9 @@
 /* See COPYRIGHT for copyright information. */
 
+#include <inc/error.h>
+
 #include <kern/time.h>
+#include <kern/tsc.h>
 
 bool is_leap_year(int year)
 {
@@ -134,4 +137,20 @@ int timestamp_from_timespec(const struct timespec* ts)
      so we don't need to do normalixztion first 
     */
     return ts->tv_sec;
+}
+
+int clock_getres(clockid_t clock_id, struct timespec* res)
+{
+    if (res == NULL && !check_clock_arg(clock_id)) {
+        return -E_INVAL;
+    }
+    if (clock_id != CLOCK_REALTIME) {
+        res->tv_nsec = nanosec_interval();
+        res->tv_sec = 0;
+    }
+    else {
+        res->tv_nsec = 0;
+        res->tv_sec = 1;
+    }
+    return 0;
 }

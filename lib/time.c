@@ -136,6 +136,10 @@ int clock_getres(clockid_t clock_id, struct timespec *res)
     return sys_clock_getres(clock_id, (struct timespec* ) res);
 }
 
+int clock_getres_dummy(clockid_t clock_id, struct timespec *res)
+{
+    return sys_clock_getres(clock_id, (struct timespec* ) res);
+}
 
 int clock_gettime(clockid_t clock_id, struct timespec *tp)
 {
