@@ -337,7 +337,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	// init clock
 	clock_init(&e->env_time);
 	e->env_time_start = nanosec_from_timer();
-	e->env_sleep_remain = 0;
+	e->env_sleep_until = 0;
 	e->env_sleep_clock_type = 0; // 0 is invalid value, no need toi wait
 
 

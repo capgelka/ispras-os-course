@@ -141,7 +141,7 @@ typedef uint32_t time_t;
 
 bool is_leap_year(int year);
 int d_to_s(int d);
-int timestamp(struct tm *time);
+int timestamp(const struct tm *time);
 void mktime(int time, struct tm *tm);
 void print_datetime(struct tm *tm);
 void snprint_datetime(char *buf, int size, struct tm *tm);

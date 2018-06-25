@@ -549,7 +549,7 @@ sys_clock_nanosleep(
 )
 {
 
-	if (tp == NULL || !check_clock_arg(clock_id)) {
+	if (rqtp == NULL || !check_clock_arg(clock_id)) {
         return -E_INVAL;
     }
 
@@ -558,9 +558,9 @@ sys_clock_nanosleep(
         case CLOCK_REALTIME:
 	        curenv->env_sleep_clock_type = CLOCK_REALTIME;
 	        if (flags == TIMER_ABSTIME) {
-	        	e->env_sleep_until = timestamp(rqtp);
+	        	curenv->env_sleep_until = timestamp_from_timespec(rqtp);
 	        } else {
-	        	e->env_sleep_until = gettime() + timestamp(rqtp);
+	        	curenv->env_sleep_until = gettime() + timestamp_from_timespec(rqtp);
 	        }
             break;
         case CLOCK_MONOTONIC:

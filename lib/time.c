@@ -11,7 +11,7 @@ int d_to_s(int d)
     return d * 24 * 60 * 60;
 }
 
-int timestamp(struct tm *time)
+int timestamp(const struct tm *time)
 {
     int result = 0, year, month;
     for (year = 1970; year < time->tm_year + 1970; year++)
@@ -94,7 +94,7 @@ int timespec_from_timestamp(int time, struct timespec* ts)
     return 0;
 }
 
-int timespecec_from_tm(struct tm* tm, struct timespec* ts)
+int timespecec_from_tm(const struct tm* tm, struct timespec* ts)
 {
     return timespec_from_timestamp(
         timestamp(tm),
@@ -102,7 +102,7 @@ int timespecec_from_tm(struct tm* tm, struct timespec* ts)
     );
 }
 
-int timestamp_from_timespec(struct timespec* ts)
+int timestamp_from_timespec(const struct timespec* ts)
 {
     /* ts should never be in not normilezed state by convinence,
      so we don't need to do normalixztion first 
@@ -110,7 +110,7 @@ int timestamp_from_timespec(struct timespec* ts)
     return ts->tv_sec;
 }
 
-int mkdate_from_timespec(struct timespec* ts, struct tm* tm)
+int mkdate_from_timespec(const struct timespec* ts, struct tm* tm)
 {
     /* ts should never be in not normilezed state by convinence,
      so we don't need to do normalixztion first 

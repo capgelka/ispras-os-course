@@ -32,7 +32,7 @@ bool is_leap_year(int year);
 
 int d_to_s(int d);
 
-int timestamp(struct tm *time);
+int timestamp(const struct tm *time);
 
 void mktime(int time, struct tm *tm);
 
@@ -50,9 +50,9 @@ int clock_nanosleep(clockid_t clock_id, int flags, const struct timespec
 *rqtp, struct timespec *rmtp);
 
 int timespec_from_timestamp(int time, struct timespec* ts);
-int timespecec_from_tm(struct tm* tm, struct timespec* ts);
-int timestamp_from_timespec(struct timespec* ts);
-int mkdate_from_timespec(struct timespec* ts, struct tm* tm);
+int timespecec_from_tm(const struct tm* tm, struct timespec* ts);
+int timestamp_from_timespec(const struct timespec* ts);
+int mkdate_from_timespec(const struct timespec* ts, struct tm* tm);
 
 
 #define CLOCK_MONOTONIC 1

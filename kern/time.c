@@ -1,10 +1,5 @@
 /* See COPYRIGHT for copyright information. */
 
-// #include <inc/x86.h>
-// #include <inc/time.h>
-
-
-// #include <kern/kclock.h>
 #include <kern/time.h>
 
 bool is_leap_year(int year)
@@ -17,7 +12,7 @@ int d_to_s(int d)
     return d * 24 * 60 * 60;
 }
 
-int timestamp(struct tm *time)
+int timestamp(const struct tm *time)
 {
     int result = 0, year, month;
     for (year = 1970; year < time->tm_year + 1970; year++)
@@ -133,24 +128,10 @@ int set_tp_from_timestamp(struct timespec* tp, int tstamp)
     return 0;
 }
 
-// int
-// clock_getres(clockid_t clock_id, struct timespec *res) {
-//     /* our clock get's only seconds. Nothing to do here for REALTIME 
-//       But we can use tcs for monotonic
-//     */
-//     if (clock_id != CLOCK_REALTIME) {
-//         res->tv_nsec = nanosec_interval();
-//         res->tv_sec = 0;
-//     }
-//     else {
-//         res->tv_nsec = 0;
-//         res->tv_sec = 1;
-//     }
-//     return 0;
-// }
-
-
-// int
-// clock_gettime(clockid_t clock_id, struct timespec *tp) {
-//     return 0;
-// }
+int timestamp_from_timespec(const struct timespec* ts)
+{
+    /* ts should never be in not normilezed state by convinence,
+     so we don't need to do normalixztion first 
+    */
+    return ts->tv_sec;
+}
