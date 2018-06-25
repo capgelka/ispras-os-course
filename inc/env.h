@@ -68,6 +68,8 @@ struct Env {
 	int env_ipc_perm;		// Perm of page mapping received
 	struct timespec env_time; // amount of time process has been running
 	long long env_time_start; // moment environment start running again
+	long long env_sleep_until; //amount of time remained to sleep
+	int env_sleep_clock_type; //clock type for env_sleep_remain field
 };
 
 #endif // !JOS_INC_ENV_H

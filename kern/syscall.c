@@ -545,9 +545,35 @@ sys_clock_nanosleep(
 	clockid_t clock_id,
 	int flags,
 	const struct timespec* rqtp,
-	struct timespec* rmtp
+	struct timespec* rmtp // we don't need this field because we have no signals
 )
 {
+
+	if (tp == NULL || !check_clock_arg(clock_id)) {
+        return -E_INVAL;
+    }
+
+	switch(clock_id) {
+
+        case CLOCK_REALTIME:
+	        curenv->env_sleep_clock_type = CLOCK_REALTIME;
+	        if (flags == TIMER_ABSTIME) {
+	        	e->env_sleep_until = timestamp(rqtp);
+	        } else {
+	        	e->env_sleep_until = gettime() + timestamp(rqtp);
+	        }
+            break;
+        case CLOCK_MONOTONIC:
+	    	// current = nanosec_from_timer() - monotonic_time_start;
+	    	// new = tp->tv_nsec + (long long) tp->tv_sec * NANOSECONDS;
+	    	// monotonic_time_start += (current - new);
+            break;
+        case CLOCK_PROCESS_CPUTIME_ID:
+        	return -E_INVAL;
+            break;
+    }
+
+
 	return 0;
 }
 
